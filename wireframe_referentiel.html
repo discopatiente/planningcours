@@ -1,0 +1,295 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .app { display: flex; height: 620px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-tertiary); font-family: var(--font-sans); color: var(--color-text-primary); }
+  .sidebar { width: 200px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); padding: 16px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 8px 4px; }
+  .nav-item { font-size: 13px; padding: 6px 8px; border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px; }
+  .nav-item.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .nav-item i { font-size: 15px; }
+  .main { flex: 1; display: flex; overflow: hidden; min-width: 0; }
+  .col-left { width: 240px; flex-shrink: 0; border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; background: var(--color-background-primary); }
+  .col-mid { width: 220px; flex-shrink: 0; border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; background: var(--color-background-primary); }
+  .col-right { flex: 1; display: flex; flex-direction: column; background: var(--color-background-primary); min-width: 0; }
+  .col-header { padding: 10px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .col-title { font-size: 13px; font-weight: 500; flex: 1; }
+  .btn-sm { font-size: 12px; padding: 4px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); background: var(--color-background-primary); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .btn-primary { background: #7F77DD; color: white; border-color: #7F77DD; }
+  .col-search { padding: 8px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); flex-shrink: 0; }
+  .search-input { width: 100%; font-size: 12px; padding: 5px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); color: var(--color-text-primary); background: var(--color-background-primary); }
+  .col-body { flex: 1; overflow-y: auto; }
+  .matiere-group { border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .matiere-header { padding: 8px 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--color-background-secondary); }
+  .matiere-label { font-size: 12px; font-weight: 500; flex: 1; }
+  .matiere-count { font-size: 11px; color: var(--color-text-tertiary); }
+  .unite-item { padding: 8px 14px 8px 22px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .unite-item:last-child { border-bottom: none; }
+  .unite-item.selected { background: #EEEDFE; }
+  .unite-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .unite-name { font-size: 12px; flex: 1; line-height: 1.4; }
+  .unite-meta { font-size: 11px; color: var(--color-text-tertiary); white-space: nowrap; }
+  .prog-item { padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .prog-item.selected { background: #EEEDFE; }
+  .prog-item:last-child { border-bottom: none; }
+  .prog-name { font-size: 13px; font-weight: 500; }
+  .prog-meta { font-size: 11px; color: var(--color-text-secondary); }
+  .prog-bar-wrap { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-top: 4px; }
+  .prog-bar { height: 4px; border-radius: 2px; background: #7F77DD; }
+  .detail-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .detail-section-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text-tertiary); margin-bottom: 6px; }
+  .field-row { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-size: 12px; color: var(--color-text-secondary); }
+  .field-value { font-size: 13px; color: var(--color-text-primary); }
+  .field-link { font-size: 13px; color: #3C3489; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); }
+  .tag-purple { background: #EEEDFE; color: #3C3489; }
+  .tag-amber { background: #FAEEDA; color: #633806; }
+  .tag-teal { background: #E1F5EE; color: #085041; }
+  .instances-list { display: flex; flex-direction: column; gap: 4px; }
+  .instance-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); font-size: 12px; }
+  .instance-class { font-weight: 500; flex: 1; }
+  .instance-status { font-size: 11px; color: var(--color-text-tertiary); }
+  .push-btn { font-size: 11px; padding: 3px 8px; border: 0.5px solid #AFA9EC; border-radius: var(--border-radius-md); color: #3C3489; background: #EEEDFE; cursor: pointer; white-space: nowrap; }
+  .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); }
+  .action-bar { padding: 10px 14px; border-top: 0.5px solid var(--color-border-tertiary); display: flex; gap: 8px; flex-shrink: 0; }
+  .tab-row { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); flex-shrink: 0; }
+  .tab { font-size: 12px; padding: 8px 14px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; }
+  .tab.active { color: #3C3489; border-bottom-color: #7F77DD; font-weight: 500; }
+  .empty-hint { font-size: 12px; color: var(--color-text-tertiary); font-style: italic; text-align: center; padding: 24px 16px; }
+  .drag-handle { color: var(--color-text-tertiary); font-size: 14px; cursor: grab; }
+  .seq-item { padding: 7px 12px; display: flex; align-items: center; gap: 8px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-bottom: 5px; font-size: 12px; background: var(--color-background-primary); }
+  .seq-num { font-size: 11px; color: var(--color-text-tertiary); min-width: 18px; }
+</style>
+
+<h2 class="sr-only">Wireframe du référentiel du planificateur de cours</h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-title">Navigation</div>
+    <div class="nav-item"><i class="ti ti-calendar-week" aria-hidden="true"></i> Semaine</div>
+    <div class="nav-item"><i class="ti ti-chart-gantt" aria-hidden="true"></i> Gantt</div>
+    <div class="nav-item active"><i class="ti ti-books" aria-hidden="true"></i> Référentiel</div>
+    <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i> Paramètres</div>
+    <div style="flex:1"></div>
+    <div style="font-size:12px;color:var(--color-text-tertiary);padding:8px;">2025–2026</div>
+  </div>
+
+  <div class="main">
+
+    <!-- Colonne gauche : unités -->
+    <div class="col-left">
+      <div class="col-header">
+        <span class="col-title">Unités de cours</span>
+        <button class="btn-sm btn-primary"><i class="ti ti-plus" style="font-size:12px"></i> Nouvelle</button>
+      </div>
+      <div class="col-search">
+        <input class="search-input" type="text" placeholder="Rechercher une unité…">
+      </div>
+      <div class="col-body">
+        <div class="matiere-group">
+          <div class="matiere-header">
+            <i class="ti ti-chevron-down" style="font-size:13px;color:var(--color-text-tertiary)" aria-hidden="true"></i>
+            <div style="width:8px;height:8px;border-radius:50%;background:#7F77DD;flex-shrink:0"></div>
+            <span class="matiere-label">Histoire-Géo</span>
+            <span class="matiere-count">12 unités</span>
+          </div>
+          <div class="unite-item selected">
+            <div class="unite-dot" style="background:#7F77DD"></div>
+            <span class="unite-name">La Première Guerre mondiale — origines</span>
+            <span class="unite-meta">1h</span>
+          </div>
+          <div class="unite-item">
+            <div class="unite-dot" style="background:#7F77DD"></div>
+            <span class="unite-name">La Première Guerre mondiale — déroulement</span>
+            <span class="unite-meta">1h</span>
+          </div>
+          <div class="unite-item">
+            <div class="unite-dot" style="background:#7F77DD"></div>
+            <span class="unite-name">Géopolitique — introduction</span>
+            <span class="unite-meta">1h</span>
+          </div>
+          <div class="unite-item">
+            <div class="unite-dot" style="background:#7F77DD"></div>
+            <span class="unite-name">La Seconde Guerre mondiale</span>
+            <span class="unite-meta">1h</span>
+          </div>
+        </div>
+        <div class="matiere-group">
+          <div class="matiere-header">
+            <i class="ti ti-chevron-down" style="font-size:13px;color:var(--color-text-tertiary)" aria-hidden="true"></i>
+            <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0"></div>
+            <span class="matiere-label">Maths</span>
+            <span class="matiere-count">18 unités</span>
+          </div>
+          <div class="unite-item">
+            <div class="unite-dot" style="background:#1D9E75"></div>
+            <span class="unite-name">Les fonctions — introduction</span>
+            <span class="unite-meta">1h</span>
+          </div>
+          <div class="unite-item">
+            <div class="unite-dot" style="background:#1D9E75"></div>
+            <span class="unite-name">Les fonctions — variations</span>
+            <span class="unite-meta">1h</span>
+          </div>
+        </div>
+        <div class="matiere-group">
+          <div class="matiere-header">
+            <i class="ti ti-chevron-right" style="font-size:13px;color:var(--color-text-tertiary)" aria-hidden="true"></i>
+            <div style="width:8px;height:8px;border-radius:50%;background:#378ADD;flex-shrink:0"></div>
+            <span class="matiere-label">Français</span>
+            <span class="matiere-count">14 unités</span>
+          </div>
+        </div>
+        <div class="matiere-group">
+          <div class="matiere-header">
+            <i class="ti ti-chevron-right" style="font-size:13px;color:var(--color-text-tertiary)" aria-hidden="true"></i>
+            <div style="width:8px;height:8px;border-radius:50%;background:#BA7517;flex-shrink:0"></div>
+            <span class="matiere-label">Économie</span>
+            <span class="matiere-count">10 unités</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne milieu : détail de l'unité sélectionnée -->
+    <div class="col-mid">
+      <div class="col-header">
+        <span class="col-title">Détail de l'unité</span>
+        <button class="btn-sm"><i class="ti ti-edit" style="font-size:12px"></i> Modifier</button>
+      </div>
+      <div class="tab-row">
+        <div class="tab active">Contenu</div>
+        <div class="tab">Instances</div>
+      </div>
+      <div class="detail-body">
+        <div>
+          <div class="detail-section-title">Titre</div>
+          <div class="field-value">La Première Guerre mondiale — origines</div>
+        </div>
+        <div>
+          <div class="detail-section-title">Matière</div>
+          <span class="tag tag-purple">Histoire-Géo</span>
+        </div>
+        <div>
+          <div class="detail-section-title">Document de cours</div>
+          <div class="field-link"><i class="ti ti-file-text" style="font-size:13px" aria-hidden="true"></i> Ouvrir le PDF <i class="ti ti-external-link" style="font-size:11px" aria-hidden="true"></i></div>
+        </div>
+        <hr class="divider">
+        <div>
+          <div class="detail-section-title">Préparation</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+            <div class="field-row">
+              <div class="field-label">Imprimer avant le cours</div>
+              <div class="field-value">3 jours</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Prévenir les élèves</div>
+              <div class="field-value">14 jours — apporter le manuel p. 42</div>
+            </div>
+          </div>
+        </div>
+        <hr class="divider">
+        <div>
+          <div class="detail-section-title">Notes</div>
+          <div class="field-value" style="font-size:12px;color:var(--color-text-secondary);line-height:1.5">Insister sur l'attentat de Sarajevo. La carte des alliances fonctionne bien en introduction.</div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn-sm" style="flex:1;justify-content:center"><i class="ti ti-copy" style="font-size:12px"></i> Dupliquer</button>
+        <button class="btn-sm" style="color:#712B13;border-color:#F0997B"><i class="ti ti-trash" style="font-size:12px"></i></button>
+      </div>
+    </div>
+
+    <!-- Colonne droite : progressions -->
+    <div class="col-right">
+      <div class="col-header">
+        <span class="col-title">Progressions</span>
+        <button class="btn-sm btn-primary"><i class="ti ti-plus" style="font-size:12px"></i> Nouvelle</button>
+      </div>
+      <div class="col-body" style="padding:12px">
+
+        <div style="margin-bottom:10px">
+          <div class="detail-section-title" style="margin-bottom:8px">Histoire-Géo</div>
+          <div class="prog-item selected" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="prog-name">Terminale HG</span>
+              <span class="tag tag-purple">12 unités</span>
+            </div>
+            <div class="prog-meta">Utilisée par : Terminale HG</div>
+            <div class="prog-bar-wrap"><div class="prog-bar" style="width:42%"></div></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:10px">
+          <div class="detail-section-title" style="margin-bottom:8px">Maths</div>
+          <div class="prog-item" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="prog-name">Seconde — ordre A</span>
+              <span class="tag tag-teal">18 unités</span>
+            </div>
+            <div class="prog-meta">Utilisée par : 2nde A, 2nde C</div>
+            <div class="prog-bar-wrap"><div class="prog-bar" style="width:38%;background:#1D9E75"></div></div>
+          </div>
+          <div class="prog-item" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="prog-name">Seconde — ordre B</span>
+              <span class="tag tag-teal">18 unités</span>
+            </div>
+            <div class="prog-meta">Utilisée par : 2nde B</div>
+            <div class="prog-bar-wrap"><div class="prog-bar" style="width:35%;background:#1D9E75"></div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="detail-section-title" style="margin-bottom:8px">Français</div>
+          <div class="prog-item" style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="prog-name">Troisième</span>
+              <span class="tag" style="background:#E6F1FB;color:#0C447C">14 unités</span>
+            </div>
+            <div class="prog-meta">Utilisée par : 3ème A, 3ème B</div>
+            <div class="prog-bar-wrap"><div class="prog-bar" style="width:30%;background:#378ADD"></div></div>
+          </div>
+        </div>
+
+        <hr class="divider" style="margin:12px 0">
+
+        <div>
+          <div class="detail-section-title" style="margin-bottom:8px">Ordre des unités — Terminale HG</div>
+          <div class="seq-item">
+            <span class="drag-handle"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>
+            <span class="seq-num">1</span>
+            <span style="flex:1;font-size:12px">La 1GM — origines</span>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">passé</span>
+          </div>
+          <div class="seq-item">
+            <span class="drag-handle"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>
+            <span class="seq-num">2</span>
+            <span style="flex:1;font-size:12px">La 1GM — déroulement</span>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">passé</span>
+          </div>
+          <div class="seq-item" style="border-color:#7F77DD">
+            <span class="drag-handle"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>
+            <span class="seq-num">3</span>
+            <span style="flex:1;font-size:12px;font-weight:500">Géopolitique — intro</span>
+            <span style="font-size:11px;color:#7F77DD">en cours</span>
+          </div>
+          <div class="seq-item" style="opacity:0.5">
+            <span class="drag-handle"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>
+            <span class="seq-num">4</span>
+            <span style="flex:1;font-size:12px">La Seconde Guerre mondiale</span>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">à venir</span>
+          </div>
+          <div class="seq-item" style="opacity:0.5">
+            <span class="drag-handle"><i class="ti ti-grip-vertical" aria-hidden="true"></i></span>
+            <span class="seq-num">5</span>
+            <span style="flex:1;font-size:12px">Décolonisation</span>
+            <span style="font-size:11px;color:var(--color-text-tertiary)">à venir</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

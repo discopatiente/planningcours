@@ -1,0 +1,201 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .app { display: flex; height: 620px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-tertiary); font-family: var(--font-sans); color: var(--color-text-primary); }
+  .sidebar { width: 200px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); padding: 16px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 8px 4px; }
+  .nav-item { font-size: 13px; padding: 6px 8px; border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px; }
+  .nav-item.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .nav-item i { font-size: 15px; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .week-nav { display: flex; align-items: center; gap: 8px; }
+  .btn-icon { width: 28px; height: 28px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--color-text-secondary); background: var(--color-background-primary); flex-shrink: 0; }
+  .week-label { font-size: 14px; font-weight: 500; min-width: 160px; text-align: center; }
+  .spacer { flex: 1; }
+  .view-toggle { display: flex; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .view-btn { font-size: 12px; padding: 5px 10px; cursor: pointer; color: var(--color-text-secondary); background: var(--color-background-primary); display: flex; align-items: center; gap: 5px; border-right: 0.5px solid var(--color-border-tertiary); }
+  .view-btn:last-child { border-right: none; }
+  .view-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .cal-wrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .cal-head { display: grid; grid-template-columns: 44px repeat(5, 1fr); border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
+  .cal-head-cell { padding: 8px 6px; text-align: center; border-right: 0.5px solid var(--color-border-tertiary); }
+  .cal-head-cell:last-child { border-right: none; }
+  .cal-head-day { font-size: 12px; color: var(--color-text-secondary); }
+  .cal-head-date { font-size: 15px; font-weight: 500; margin-top: 2px; }
+  .cal-head-date.today { background: #7F77DD; color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 2px auto 0; font-size: 13px; }
+  .cal-body { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 44px repeat(5, 1fr); position: relative; }
+  .time-col { border-right: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
+  .time-slot { height: 56px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 4px 8px 0 0; font-size: 11px; color: var(--color-text-tertiary); border-bottom: 0.5px solid var(--color-border-tertiary); flex-shrink: 0; }
+  .day-col { border-right: 0.5px solid var(--color-border-tertiary); position: relative; background: var(--color-background-primary); }
+  .day-col:last-child { border-right: none; }
+  .hour-line { height: 56px; border-bottom: 0.5px solid var(--color-border-tertiary); flex-shrink: 0; }
+  .event { position: absolute; left: 3px; right: 3px; border-radius: var(--border-radius-md); padding: 5px 7px; overflow: hidden; cursor: pointer; }
+  .event-purple { background: #EEEDFE; border-left: 3px solid #7F77DD; }
+  .event-teal { background: #E1F5EE; border-left: 3px solid #1D9E75; }
+  .event-blue { background: #E6F1FB; border-left: 3px solid #378ADD; }
+  .event-coral { background: #FAECE7; border-left: 3px solid #D85A30; }
+  .event-amber { background: #FAEEDA; border-left: 3px solid #BA7517; }
+  .event-done { opacity: 0.5; }
+  .event-title { font-size: 11px; font-weight: 500; line-height: 1.3; }
+  .event-meta { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+  .event-purple .event-title { color: #3C3489; }
+  .event-teal .event-title { color: #085041; }
+  .event-blue .event-title { color: #0C447C; }
+  .event-coral .event-title { color: #712B13; }
+  .event-amber .event-title { color: #633806; }
+  .now-line { position: absolute; left: 0; right: 0; height: 1.5px; background: #D85A30; z-index: 10; }
+  .now-dot { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: #D85A30; }
+</style>
+
+<h2 class="sr-only">Wireframe de la vue calendrier hebdomadaire du planificateur de cours</h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-title">Navigation</div>
+    <div class="nav-item"><i class="ti ti-calendar-week" aria-hidden="true"></i> Semaine</div>
+    <div class="nav-item active"><i class="ti ti-layout-columns" aria-hidden="true"></i> Calendrier</div>
+    <div class="nav-item"><i class="ti ti-chart-gantt" aria-hidden="true"></i> Gantt</div>
+    <div class="nav-item"><i class="ti ti-books" aria-hidden="true"></i> Référentiel</div>
+    <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i> Paramètres</div>
+    <div style="flex:1"></div>
+    <div style="font-size:12px;color:var(--color-text-tertiary);padding:8px;">2025–2026</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="week-nav">
+        <div class="btn-icon"><i class="ti ti-chevron-left"></i></div>
+        <div class="week-label">Semaine 12 — 17 au 21 mars</div>
+        <div class="btn-icon"><i class="ti ti-chevron-right"></i></div>
+      </div>
+      <div class="btn-icon"><i class="ti ti-home"></i></div>
+      <div class="spacer"></div>
+      <div class="view-toggle">
+        <div class="view-btn"><i class="ti ti-list" style="font-size:13px"></i> Liste</div>
+        <div class="view-btn active"><i class="ti ti-layout-columns" style="font-size:13px"></i> Calendrier</div>
+      </div>
+    </div>
+
+    <div class="cal-wrap">
+      <div class="cal-head">
+        <div class="cal-head-cell"></div>
+        <div class="cal-head-cell">
+          <div class="cal-head-day">lun</div>
+          <div class="cal-head-date">17</div>
+        </div>
+        <div class="cal-head-cell">
+          <div class="cal-head-day">mar</div>
+          <div class="cal-head-date today">18</div>
+        </div>
+        <div class="cal-head-cell">
+          <div class="cal-head-day">mer</div>
+          <div class="cal-head-date">19</div>
+        </div>
+        <div class="cal-head-cell">
+          <div class="cal-head-day">jeu</div>
+          <div class="cal-head-date">20</div>
+        </div>
+        <div class="cal-head-cell">
+          <div class="cal-head-day">ven</div>
+          <div class="cal-head-date">21</div>
+        </div>
+      </div>
+
+      <div class="cal-body">
+        <div class="time-col">
+          <div class="time-slot">8h</div>
+          <div class="time-slot">9h</div>
+          <div class="time-slot">10h</div>
+          <div class="time-slot">11h</div>
+          <div class="time-slot">12h</div>
+          <div class="time-slot">13h</div>
+          <div class="time-slot">14h</div>
+          <div class="time-slot">15h</div>
+          <div class="time-slot">16h</div>
+          <div class="time-slot">17h</div>
+        </div>
+
+        <!-- Lundi -->
+        <div class="day-col">
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="event event-purple event-done" style="top:4px;height:48px;">
+            <div class="event-title">La 1ère Guerre mondiale</div>
+            <div class="event-meta">Terminale HG</div>
+          </div>
+          <div class="event event-teal event-done" style="top:116px;height:48px;">
+            <div class="event-title">Les fonctions — intro</div>
+            <div class="event-meta">2nde A · Maths</div>
+          </div>
+          <div class="event event-blue" style="top:340px;height:48px;">
+            <div class="event-title">Phrase complexe</div>
+            <div class="event-meta">3ème B · Français</div>
+          </div>
+        </div>
+
+        <!-- Mardi -->
+        <div class="day-col">
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="now-line" style="top:172px;"><div class="now-dot"></div></div>
+          <div class="event event-teal" style="top:60px;height:48px;">
+            <div class="event-title">Fonctions — variations</div>
+            <div class="event-meta">2nde B · Maths</div>
+          </div>
+          <div class="event event-coral" style="top:172px;height:48px;">
+            <div class="event-title">Évaluation ch. 3</div>
+            <div class="event-meta">Terminale HG · ✱ devoir</div>
+          </div>
+          <div class="event event-purple" style="top:284px;height:48px;">
+            <div class="event-title">Géopolitique — intro</div>
+            <div class="event-meta">Terminale HG</div>
+          </div>
+        </div>
+
+        <!-- Mercredi -->
+        <div class="day-col" style="background: var(--color-background-tertiary);">
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+        </div>
+
+        <!-- Jeudi -->
+        <div class="day-col">
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="event event-blue" style="top:4px;height:48px;">
+            <div class="event-title">La subordonnée relative</div>
+            <div class="event-meta">3ème A · Français</div>
+          </div>
+          <div class="event event-amber" style="top:116px;height:48px;">
+            <div class="event-title">Le commerce mondial</div>
+            <div class="event-meta">1ère ES · Éco</div>
+          </div>
+          <div class="event event-teal" style="top:228px;height:48px;">
+            <div class="event-title">Fonctions — variations</div>
+            <div class="event-meta">2nde C · Maths</div>
+          </div>
+        </div>
+
+        <!-- Vendredi -->
+        <div class="day-col">
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div><div class="hour-line"></div>
+          <div class="event event-purple" style="top:60px;height:48px;">
+            <div class="event-title">Analyse de document</div>
+            <div class="event-meta">Terminale HG</div>
+          </div>
+          <div class="event event-amber" style="top:172px;height:48px;">
+            <div class="event-title">Mondialisation — bilan</div>
+            <div class="event-meta">1ère ES · Éco</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

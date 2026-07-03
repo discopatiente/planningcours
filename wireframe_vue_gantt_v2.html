@@ -1,0 +1,348 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .app { display: flex; height: 620px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-tertiary); font-family: var(--font-sans); color: var(--color-text-primary); }
+  .sidebar { width: 200px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); padding: 16px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 8px 4px; }
+  .nav-item { font-size: 13px; padding: 6px 8px; border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px; }
+  .nav-item.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .nav-item i { font-size: 15px; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 10px 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+  .spacer { flex: 1; }
+  .toggle-group { display: flex; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .toggle-btn { font-size: 12px; padding: 5px 10px; cursor: pointer; color: var(--color-text-secondary); background: var(--color-background-primary); display: flex; align-items: center; gap: 5px; border-right: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
+  .toggle-btn:last-child { border-right: none; }
+  .toggle-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .zoom-group { display: flex; align-items: center; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .zoom-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text-secondary); background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); font-size: 14px; }
+  .zoom-btn:last-child { border-right: none; }
+  .zoom-label { font-size: 12px; color: var(--color-text-secondary); padding: 0 8px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
+  .warning-pill { font-size: 11px; background: #FAEEDA; color: #633806; padding: 2px 8px; border-radius: var(--border-radius-md); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .gantt-wrap { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+  .gantt-head { display: flex; flex-shrink: 0; position: sticky; top: 0; z-index: 10; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .gantt-label-col { width: 160px; flex-shrink: 0; border-right: 0.5px solid var(--color-border-tertiary); }
+  .gantt-timeline { flex: 1; min-width: 0; }
+  .trimester-row { display: flex; }
+  .trimester { flex: 1; text-align: center; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); padding: 5px 0; border-right: 0.5px solid var(--color-border-tertiary); }
+  .trimester:last-child { border-right: none; }
+  .t1 { background: #F1EFE8; color: #444441; }
+  .t2 { background: #E1F5EE; color: #085041; }
+  .t3 { background: #E6F1FB; color: #0C447C; }
+  .month-row { display: flex; border-top: 0.5px solid var(--color-border-tertiary); }
+  .month { flex: 1; text-align: center; font-size: 11px; color: var(--color-text-tertiary); padding: 4px 0; border-right: 0.5px solid var(--color-border-tertiary); }
+  .month.current { font-weight: 500; color: #D85A30; }
+  .month:last-child { border-right: none; }
+  .week-row { display: flex; border-top: 0.5px solid var(--color-border-tertiary); }
+  .week { flex: 1; text-align: center; font-size: 10px; color: var(--color-text-tertiary); padding: 3px 0; border-right: 0.5px solid var(--color-border-tertiary); }
+  .week.current { font-weight: 500; color: #D85A30; }
+  .week:last-child { border-right: none; }
+  .gantt-body { flex: 1; display: flex; flex-direction: column; }
+  .gantt-row { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); min-height: 44px; align-items: center; }
+  .gantt-row:last-child { border-bottom: none; }
+  .gantt-row-label { width: 160px; flex-shrink: 0; padding: 8px 12px; border-right: 0.5px solid var(--color-border-tertiary); }
+  .gantt-row-class { font-size: 12px; font-weight: 500; }
+  .gantt-row-subject { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  .gantt-row-track { flex: 1; position: relative; min-height: 44px; }
+  .vacances { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(128,128,128,0.06) 3px, rgba(128,128,128,0.06) 6px); border-left: 0.5px dashed var(--color-border-secondary); border-right: 0.5px dashed var(--color-border-secondary); }
+  .now-col { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #D85A30; z-index: 8; }
+  .gantt-block { position: absolute; top: 8px; height: 28px; border-radius: var(--border-radius-md); display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 500; overflow: hidden; white-space: nowrap; cursor: pointer; }
+  .gantt-block-done { opacity: 0.45; }
+  .block-purple { background: #EEEDFE; color: #3C3489; border: 0.5px solid #AFA9EC; }
+  .block-teal { background: #E1F5EE; color: #085041; border: 0.5px solid #5DCAA5; }
+  .block-blue { background: #E6F1FB; color: #0C447C; border: 0.5px solid #85B7EB; }
+  .block-amber { background: #FAEEDA; color: #633806; border: 0.5px solid #EF9F27; }
+  .eval-dot { position: absolute; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; border-radius: 50%; background: #D85A30; border: 1.5px solid var(--color-background-primary); z-index: 5; }
+  .section-header { background: var(--color-background-secondary); }
+  .section-header .gantt-row-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .legend { display: flex; gap: 16px; align-items: center; padding: 8px 16px; background: var(--color-background-primary); border-top: 0.5px solid var(--color-border-tertiary); flex-shrink: 0; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary); }
+  .legend-stripe { width: 16px; height: 10px; background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(128,128,128,0.12) 2px, rgba(128,128,128,0.12) 4px); border: 0.5px dashed var(--color-border-secondary); border-radius: 2px; }
+
+  .zoom-annual .month-zoom { display: flex; }
+  .zoom-annual .week-zoom { display: none; }
+  .zoom-trimester .month-zoom { display: flex; }
+  .zoom-trimester .week-zoom { display: flex; }
+  .zoom-month .month-zoom { display: none; }
+  .zoom-month .week-zoom { display: flex; }
+
+  .block-info { position: absolute; top: 8px; height: 28px; display: flex; align-items: center; gap: 6px; overflow: hidden; width: 100%; padding: 0 8px; pointer-events: none; }
+  .block-count { font-size: 10px; opacity: 0.7; flex-shrink: 0; }
+</style>
+
+<h2 class="sr-only">Wireframe de la vue Gantt avec zoom du planificateur de cours</h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-title">Navigation</div>
+    <div class="nav-item"><i class="ti ti-calendar-week" aria-hidden="true"></i> Semaine</div>
+    <div class="nav-item active"><i class="ti ti-chart-gantt" aria-hidden="true"></i> Gantt</div>
+    <div class="nav-item"><i class="ti ti-books" aria-hidden="true"></i> Référentiel</div>
+    <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i> Paramètres</div>
+    <div style="flex:1"></div>
+    <div style="font-size:12px;color:var(--color-text-tertiary);padding:8px;">2025–2026</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="toggle-group">
+        <div class="toggle-btn active"><i class="ti ti-layout-rows" style="font-size:13px"></i> Par classe</div>
+        <div class="toggle-btn"><i class="ti ti-books" style="font-size:13px"></i> Par matière</div>
+        <div class="toggle-btn"><i class="ti ti-user" style="font-size:13px"></i> Ma charge</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="zoom-group">
+        <div class="zoom-btn" id="btn-zoom-out"><i class="ti ti-zoom-out"></i></div>
+        <div class="zoom-label" id="zoom-label">Année</div>
+        <div class="zoom-btn" id="btn-zoom-in"><i class="ti ti-zoom-in"></i></div>
+      </div>
+      <div class="warning-pill"><i class="ti ti-alert-triangle" style="font-size:11px"></i> 3 débordements</div>
+    </div>
+
+    <div class="gantt-wrap" id="gantt-wrap">
+
+      <!-- Vue année -->
+      <div id="view-annual" class="gantt-head">
+        <div class="gantt-label-col"></div>
+        <div class="gantt-timeline">
+          <div class="trimester-row">
+            <div class="trimester t1">Trimestre 1 · sept–déc</div>
+            <div class="trimester t2">Trimestre 2 · jan–mars</div>
+            <div class="trimester t3">Trimestre 3 · avr–juin</div>
+          </div>
+          <div class="month-row month-zoom">
+            <div class="month">sep</div><div class="month">oct</div><div class="month">nov</div><div class="month">déc</div>
+            <div class="month current">jan</div><div class="month">fév</div><div class="month">mar</div>
+            <div class="month">avr</div><div class="month">mai</div><div class="month">juin</div>
+          </div>
+          <div class="week-row week-zoom" style="display:none">
+            <div class="week">S1</div><div class="week">S2</div><div class="week">S3</div><div class="week">S4</div>
+            <div class="week">S5</div><div class="week">S6</div><div class="week">S7</div><div class="week">S8</div>
+            <div class="week">S9</div><div class="week">S10</div><div class="week">S11</div><div class="week">S12</div>
+            <div class="week current">S13</div><div class="week">S14</div><div class="week">S15</div><div class="week">S16</div>
+            <div class="week">S17</div><div class="week">S18</div><div class="week">S19</div><div class="week">S20</div>
+            <div class="week">S21</div><div class="week">S22</div><div class="week">S23</div><div class="week">S24</div>
+            <div class="week">S25</div><div class="week">S26</div><div class="week">S27</div><div class="week">S28</div>
+            <div class="week">S29</div><div class="week">S30</div><div class="week">S31</div><div class="week">S32</div>
+            <div class="week">S33</div><div class="week">S34</div><div class="week">S35</div><div class="week">S36</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gantt-body" id="gantt-body">
+        <div class="gantt-row section-header">
+          <div class="gantt-row-label">Terminale</div>
+          <div class="gantt-row-track"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-row-label">
+            <div class="gantt-row-class">Terminale HG</div>
+            <div class="gantt-row-subject">Histoire-Géo</div>
+          </div>
+          <div class="gantt-row-track" id="track-t">
+            <div class="vacances" style="left:18%;width:5%"></div>
+            <div class="vacances" style="left:40%;width:4%"></div>
+            <div class="vacances" style="left:62%;width:5%"></div>
+            <div class="now-col" style="left:25%"></div>
+            <div class="gantt-block block-purple gantt-block-done" style="left:1%;width:16%" data-label="La 1GM — origines" data-count="8 séances">La 1GM — origines</div>
+            <div class="gantt-block block-purple gantt-block-done" style="left:23%;width:10%" data-label="Géopolitique" data-count="5 séances">Géopolitique</div>
+            <div class="gantt-block block-purple" style="left:33%;width:13%" data-label="La 2GM" data-count="7 séances">La 2GM</div>
+            <div class="gantt-block block-purple" style="left:46%;width:12%" data-label="Décolonisation" data-count="6 séances">Décolonisation</div>
+            <div class="gantt-block block-purple" style="left:58%;width:14%" data-label="Guerre froide" data-count="7 séances">Guerre froide</div>
+            <div class="gantt-block block-purple" style="left:72%;width:10%" data-label="Monde actuel" data-count="5 séances">Monde actuel</div>
+            <div class="eval-dot" style="left:20%"></div>
+            <div class="eval-dot" style="left:44%"></div>
+            <div class="eval-dot" style="left:69%"></div>
+          </div>
+        </div>
+        <div class="gantt-row section-header">
+          <div class="gantt-row-label">Seconde</div>
+          <div class="gantt-row-track"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-row-label">
+            <div class="gantt-row-class">2nde A</div>
+            <div class="gantt-row-subject">Maths</div>
+          </div>
+          <div class="gantt-row-track">
+            <div class="vacances" style="left:18%;width:5%"></div>
+            <div class="vacances" style="left:40%;width:4%"></div>
+            <div class="vacances" style="left:62%;width:5%"></div>
+            <div class="now-col" style="left:25%"></div>
+            <div class="gantt-block block-teal gantt-block-done" style="left:1%;width:11%" data-label="Nombres réels" data-count="6 séances">Nombres réels</div>
+            <div class="gantt-block block-teal gantt-block-done" style="left:23%;width:9%" data-label="Fonctions" data-count="5 séances">Fonctions</div>
+            <div class="gantt-block block-teal" style="left:32%;width:12%" data-label="Géométrie" data-count="6 séances">Géométrie</div>
+            <div class="gantt-block block-teal" style="left:44%;width:10%" data-label="Probabilités" data-count="5 séances">Probabilités</div>
+            <div class="gantt-block block-teal" style="left:54%;width:13%" data-label="Statistiques" data-count="7 séances">Statistiques</div>
+            <div class="gantt-block block-teal" style="left:67%;width:11%" data-label="Algorithmique" data-count="6 séances">Algorithmique</div>
+            <div class="eval-dot" style="left:19%"></div>
+            <div class="eval-dot" style="left:42%"></div>
+            <div class="eval-dot" style="left:65%"></div>
+          </div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-row-label">
+            <div class="gantt-row-class">2nde B</div>
+            <div class="gantt-row-subject">Maths</div>
+          </div>
+          <div class="gantt-row-track">
+            <div class="vacances" style="left:18%;width:5%"></div>
+            <div class="vacances" style="left:40%;width:4%"></div>
+            <div class="vacances" style="left:62%;width:5%"></div>
+            <div class="now-col" style="left:25%"></div>
+            <div class="gantt-block block-teal gantt-block-done" style="left:1%;width:13%" data-label="Fonctions" data-count="7 séances">Fonctions</div>
+            <div class="gantt-block block-teal gantt-block-done" style="left:23%;width:8%" data-label="Nombres réels" data-count="4 séances">Nombres réels</div>
+            <div class="gantt-block block-teal" style="left:31%;width:12%" data-label="Géométrie" data-count="6 séances">Géométrie</div>
+            <div class="gantt-block block-teal" style="left:43%;width:11%" data-label="Statistiques" data-count="6 séances">Statistiques</div>
+            <div class="gantt-block block-teal" style="left:54%;width:12%" data-label="Probabilités" data-count="6 séances">Probabilités</div>
+            <div class="gantt-block block-teal" style="left:66%;width:12%" data-label="Algorithmique" data-count="6 séances">Algorithmique</div>
+            <div class="eval-dot" style="left:21%"></div>
+            <div class="eval-dot" style="left:41%"></div>
+            <div class="eval-dot" style="left:63%"></div>
+          </div>
+        </div>
+        <div class="gantt-row section-header">
+          <div class="gantt-row-label">Troisième</div>
+          <div class="gantt-row-track"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-row-label">
+            <div class="gantt-row-class">3ème A</div>
+            <div class="gantt-row-subject">Français</div>
+          </div>
+          <div class="gantt-row-track">
+            <div class="vacances" style="left:18%;width:5%"></div>
+            <div class="vacances" style="left:40%;width:4%"></div>
+            <div class="vacances" style="left:62%;width:5%"></div>
+            <div class="now-col" style="left:25%"></div>
+            <div class="gantt-block block-blue gantt-block-done" style="left:1%;width:15%" data-label="Narration — récit" data-count="8 séances">Narration — récit</div>
+            <div class="gantt-block block-blue gantt-block-done" style="left:23%;width:9%" data-label="Phrase complexe" data-count="5 séances">Phrase complexe</div>
+            <div class="gantt-block block-blue" style="left:32%;width:13%" data-label="Argumentation" data-count="7 séances">Argumentation</div>
+            <div class="gantt-block block-blue" style="left:45%;width:11%" data-label="Poésie" data-count="6 séances">Poésie</div>
+            <div class="gantt-block block-blue" style="left:56%;width:14%" data-label="Théâtre" data-count="7 séances">Théâtre</div>
+            <div class="eval-dot" style="left:20%"></div>
+            <div class="eval-dot" style="left:43%"></div>
+            <div class="eval-dot" style="left:66%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-stripe"></div> Vacances</div>
+      <div class="legend-item"><div style="width:8px;height:8px;border-radius:50%;background:#D85A30;border:1.5px solid var(--color-background-primary);box-shadow:0 0 0 1px #D85A30"></div> Évaluation</div>
+      <div class="legend-item"><div style="width:16px;height:2px;background:#D85A30"></div> Aujourd'hui</div>
+      <div class="legend-item"><div style="width:24px;height:12px;background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:3px;opacity:0.45"></div> Passé</div>
+      <div class="legend-item"><div style="width:24px;height:12px;background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:3px;"></div> À venir</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const levels = ['Année', 'Trimestre', 'Mois'];
+let current = 0;
+
+const label = document.getElementById('zoom-label');
+const btnIn = document.getElementById('btn-zoom-in');
+const btnOut = document.getElementById('btn-zoom-out');
+const head = document.getElementById('view-annual');
+
+function applyZoom() {
+  label.textContent = levels[current];
+  const monthRow = head.querySelector('.month-zoom');
+  const weekRow = head.querySelector('.week-zoom');
+  const trimRow = head.querySelector('.trimester-row');
+
+  btnOut.style.opacity = current === 0 ? '0.3' : '1';
+  btnIn.style.opacity = current === levels.length - 1 ? '0.3' : '1';
+
+  if (current === 0) {
+    trimRow.style.display = 'flex';
+    monthRow.style.display = 'flex';
+    weekRow.style.display = 'none';
+    document.querySelectorAll('.gantt-block').forEach(b => {
+      b.style.fontSize = '11px';
+      b.textContent = b.dataset.label;
+    });
+    document.querySelectorAll('.now-col').forEach(n => n.style.left = '25%');
+    document.querySelectorAll('.eval-dot').forEach((d, i) => {
+      const positions = ['20%','44%','69%','19%','42%','65%','21%','41%','63%','20%','43%','66%'];
+      if (i < positions.length) d.style.left = positions[i];
+    });
+  } else if (current === 1) {
+    trimRow.style.display = 'flex';
+    monthRow.style.display = 'flex';
+    weekRow.style.display = 'flex';
+    document.querySelectorAll('.month').forEach((m, i) => {
+      m.style.display = (i >= 3 && i <= 5) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.week').forEach((w, i) => {
+      w.style.display = (i >= 12 && i <= 23) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.trimester').forEach((t, i) => {
+      t.style.display = i === 1 ? 'block' : 'none';
+      t.style.flex = '1';
+    });
+    document.querySelectorAll('.gantt-block').forEach(b => {
+      const left = parseFloat(b.style.left);
+      const width = parseFloat(b.style.width);
+      const inView = left >= 30 && left <= 60;
+      b.style.display = inView ? 'flex' : 'none';
+      if (inView) {
+        const newLeft = ((left - 30) / 30) * 100;
+        const newWidth = (width / 30) * 100;
+        b.style.left = Math.max(0, newLeft) + '%';
+        b.style.width = Math.min(100, newWidth) + '%';
+        b.style.fontSize = '12px';
+        b.textContent = b.dataset.label + ' · ' + b.dataset.count;
+      }
+    });
+    document.querySelectorAll('.eval-dot').forEach(d => {
+      const left = parseFloat(d.style.left);
+      const inView = left >= 30 && left <= 60;
+      d.style.display = inView ? 'block' : 'none';
+      if (inView) d.style.left = ((left - 30) / 30 * 100) + '%';
+    });
+    document.querySelectorAll('.now-col').forEach(n => n.style.left = ((25 - 30) / 30 * 100) + '%');
+    document.querySelectorAll('.vacances').forEach(v => {
+      const left = parseFloat(v.style.left);
+      const inView = left >= 30 && left <= 60;
+      v.style.display = inView ? 'block' : 'none';
+    });
+  } else {
+    trimRow.style.display = 'none';
+    monthRow.style.display = 'none';
+    weekRow.style.display = 'flex';
+    document.querySelectorAll('.week').forEach((w, i) => {
+      w.style.display = (i >= 12 && i <= 15) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.gantt-block').forEach(b => {
+      const left = parseFloat(b.style.left);
+      const width = parseFloat(b.style.width);
+      const inView = left >= 22 && left <= 34;
+      b.style.display = inView ? 'flex' : 'none';
+      if (inView) {
+        const newLeft = ((left - 22) / 12) * 100;
+        const newWidth = (width / 12) * 100;
+        b.style.left = Math.max(0, newLeft) + '%';
+        b.style.width = Math.min(100, newWidth) + '%';
+        b.style.fontSize = '12px';
+        b.textContent = b.dataset.label + ' · ' + b.dataset.count;
+      }
+    });
+    document.querySelectorAll('.eval-dot').forEach(d => {
+      const left = parseFloat(d.style.left);
+      const inView = left >= 22 && left <= 34;
+      d.style.display = inView ? 'block' : 'none';
+      if (inView) d.style.left = ((left - 22) / 12 * 100) + '%';
+    });
+    document.querySelectorAll('.now-col').forEach(n => n.style.left = ((25 - 22) / 12 * 100) + '%');
+    document.querySelectorAll('.vacances').forEach(v => v.style.display = 'none');
+  }
+}
+
+btnIn.addEventListener('click', () => { if (current < levels.length - 1) { current++; applyZoom(); } });
+btnOut.addEventListener('click', () => { if (current > 0) { current--; applyZoom(); } });
+
+applyZoom();
+</script>

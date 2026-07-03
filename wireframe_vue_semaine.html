@@ -1,0 +1,171 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); color: var(--color-text-primary); }
+  .app { display: flex; height: 620px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; background: var(--color-background-tertiary); }
+  .sidebar { width: 200px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); padding: 16px 12px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; padding: 8px 8px 4px; }
+  .nav-item { font-size: 13px; padding: 6px 8px; border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; gap: 8px; }
+  .nav-item.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .nav-item i { font-size: 15px; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  .week-nav { display: flex; align-items: center; gap: 8px; }
+  .btn-icon { width: 28px; height: 28px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--color-text-secondary); background: var(--color-background-primary); }
+  .week-label { font-size: 14px; font-weight: 500; min-width: 160px; text-align: center; }
+  .spacer { flex: 1; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: var(--border-radius-md); }
+  .badge-warning { background: #FAEEDA; color: #633806; }
+  .badge-info { background: #E6F1FB; color: #0C447C; }
+  .badge-danger { background: #FAECE7; color: #712B13; }
+  .badge-success { background: #EAF3DE; color: #27500A; }
+  .content { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .alert-bar { background: #FAEEDA; border: 0.5px solid #FAC775; border-radius: var(--border-radius-md); padding: 8px 14px; font-size: 13px; color: #633806; display: flex; align-items: center; gap: 8px; }
+  .day-block { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+  .day-header { padding: 8px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px; background: var(--color-background-secondary); }
+  .day-name { font-size: 13px; font-weight: 500; }
+  .day-date { font-size: 12px; color: var(--color-text-secondary); }
+  .day-slots { display: flex; flex-direction: column; }
+  .slot { padding: 10px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .slot:last-child { border-bottom: none; }
+  .slot-time { font-size: 12px; color: var(--color-text-tertiary); min-width: 44px; }
+  .slot-pill { width: 4px; border-radius: 2px; align-self: stretch; min-height: 36px; flex-shrink: 0; }
+  .pill-purple { background: #7F77DD; }
+  .pill-teal { background: #1D9E75; }
+  .pill-coral { background: #D85A30; }
+  .pill-blue { background: #378ADD; }
+  .pill-gray { background: #888780; }
+  .slot-info { flex: 1; }
+  .slot-title { font-size: 13px; font-weight: 500; }
+  .slot-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .slot-right { display: flex; align-items: center; gap: 6px; }
+  .slot-done { opacity: 0.45; }
+  .slot-done .slot-title { text-decoration: line-through; }
+  .check { width: 18px; height: 18px; border-radius: 50%; border: 0.5px solid var(--color-border-secondary); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--color-text-tertiary); cursor: pointer; }
+  .check.done { background: #1D9E75; border-color: #1D9E75; color: white; }
+  .link-icon { font-size: 14px; color: var(--color-text-tertiary); }
+  .slot-eval { background: #FAEEDA; }
+</style>
+
+<h2 class="sr-only">Wireframe de la vue semaine du planificateur de cours</h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-title">Navigation</div>
+    <div class="nav-item active"><i class="ti ti-calendar-week" aria-hidden="true"></i> Semaine</div>
+    <div class="nav-item"><i class="ti ti-chart-gantt" aria-hidden="true"></i> Gantt</div>
+    <div class="nav-item"><i class="ti ti-books" aria-hidden="true"></i> Référentiel</div>
+    <div class="nav-item"><i class="ti ti-settings" aria-hidden="true"></i> Paramètres</div>
+    <div style="flex:1"></div>
+    <div style="font-size: 12px; color: var(--color-text-tertiary); padding: 8px;">2025–2026</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="week-nav">
+        <div class="btn-icon"><i class="ti ti-chevron-left"></i></div>
+        <div class="week-label">Semaine 12 — 17 au 21 mars</div>
+        <div class="btn-icon"><i class="ti ti-chevron-right"></i></div>
+      </div>
+      <div class="btn-icon" title="Aujourd'hui"><i class="ti ti-home"></i></div>
+      <div class="spacer"></div>
+      <span class="badge badge-warning"><i class="ti ti-printer" style="font-size:11px;vertical-align:-1px"></i> 2 à imprimer</span>
+      <span class="badge badge-info"><i class="ti ti-bell" style="font-size:11px;vertical-align:-1px"></i> 1 alerte élèves</span>
+    </div>
+
+    <div class="content">
+      <div class="alert-bar">
+        <i class="ti ti-printer" aria-hidden="true"></i>
+        <span>Imprimer avant mercredi : <strong>Fiche méthode — analyse de document</strong> (Terminale HG) et <strong>Exercice 4 — fonctions</strong> (2nde Maths)</span>
+      </div>
+
+      <div class="day-block">
+        <div class="day-header">
+          <span class="day-name">Lundi 17 mars</span>
+          <span class="day-date"></span>
+          <div class="spacer"></div>
+          <span class="badge badge-success">2/3 faits</span>
+        </div>
+        <div class="day-slots">
+          <div class="slot slot-done">
+            <span class="slot-time">8h00</span>
+            <div class="slot-pill pill-purple"></div>
+            <div class="slot-info">
+              <div class="slot-title">La Première Guerre mondiale — origines</div>
+              <div class="slot-meta">Terminale HG · Histoire</div>
+            </div>
+            <div class="slot-right">
+              <div class="check done"><i class="ti ti-check"></i></div>
+            </div>
+          </div>
+          <div class="slot slot-done">
+            <span class="slot-time">10h00</span>
+            <div class="slot-pill pill-teal"></div>
+            <div class="slot-info">
+              <div class="slot-title">Les fonctions — introduction</div>
+              <div class="slot-meta">2nde A · Maths</div>
+            </div>
+            <div class="slot-right">
+              <div class="check done"><i class="ti ti-check"></i></div>
+            </div>
+          </div>
+          <div class="slot">
+            <span class="slot-time">14h00</span>
+            <div class="slot-pill pill-blue"></div>
+            <div class="slot-info">
+              <div class="slot-title">La phrase complexe — subordination</div>
+              <div class="slot-meta">3ème B · Français</div>
+            </div>
+            <div class="slot-right">
+              <i class="ti ti-external-link link-icon" aria-hidden="true"></i>
+              <div class="check"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-block">
+        <div class="day-header">
+          <span class="day-name">Mardi 18 mars</span>
+          <div class="spacer"></div>
+          <span class="badge badge-info">1 alerte élèves</span>
+        </div>
+        <div class="day-slots">
+          <div class="slot">
+            <span class="slot-time">9h00</span>
+            <div class="slot-pill pill-teal"></div>
+            <div class="slot-info">
+              <div class="slot-title">Les fonctions — variations</div>
+              <div class="slot-meta">2nde B · Maths · <span style="color:#633806">⚠ Prévenir les élèves aujourd'hui : apporter calculatrice vendredi</span></div>
+            </div>
+            <div class="slot-right">
+              <i class="ti ti-external-link link-icon" aria-hidden="true"></i>
+              <div class="check"></div>
+            </div>
+          </div>
+          <div class="slot slot-eval" style="border-radius:0">
+            <span class="slot-time">11h00</span>
+            <div class="slot-pill pill-coral"></div>
+            <div class="slot-info">
+              <div class="slot-title">Évaluation — chapitre 3</div>
+              <div class="slot-meta">Terminale HG · <span style="color:#712B13">Devoir sur table</span></div>
+            </div>
+            <div class="slot-right">
+              <span class="badge badge-danger">éval.</span>
+              <div class="check"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-block">
+        <div class="day-header">
+          <span class="day-name">Mercredi 19 mars</span>
+          <div class="spacer"></div>
+          <span style="font-size:12px; color: var(--color-text-tertiary)">Pas de cours</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
