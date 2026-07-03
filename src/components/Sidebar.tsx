@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { signOut } from '../lib/auth'
 
 function Sidebar() {
   return (
@@ -7,6 +8,9 @@ function Sidebar() {
       <NavLink to="/gantt">Gantt</NavLink>
       <NavLink to="/referentiel">Référentiel</NavLink>
       <NavLink to="/parametres">Paramètres</NavLink>
+      <button type="button" className="sidebar-signout" onClick={() => signOut()}>
+        Se déconnecter
+      </button>
     </nav>
   )
 }
