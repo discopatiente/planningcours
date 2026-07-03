@@ -126,3 +126,134 @@ h2 {
 .login-screen button:hover {
   opacity: 0.9;
 }
+
+.parametres-layout {
+  display: flex;
+  gap: 32px;
+  margin: -24px -32px;
+}
+
+.parametres-nav {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 100%;
+}
+
+.parametres-nav-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  opacity: 0.6;
+  padding: 12px 12px 4px;
+}
+
+.parametres-nav a {
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.parametres-nav a.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.parametres-content {
+  flex: 1;
+  padding: 24px 32px 24px 0;
+  min-width: 0;
+}
+
+.section-title {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.section-desc {
+  font-size: 14px;
+  opacity: 0.75;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card-row {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-row:last-child {
+  border-bottom: none;
+}
+
+.card-row-label {
+  flex: 1;
+}
+
+.input-sm {
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+}
+
+.btn-sm {
+  font-size: 13px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-danger {
+  color: #b91c1c;
+  border-color: #f0997b;
+}
+
+.error-text {
+  color: #b91c1c;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
