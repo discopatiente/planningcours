@@ -257,3 +257,187 @@ h2 {
   font-size: 14px;
   margin-bottom: 12px;
 }
+
+.emploi-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.emploi-toolbar-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.semaine-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.emploi-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(5, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.eg-cell {
+  padding: 8px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  text-align: center;
+}
+
+.eg-cell:nth-child(6n) {
+  border-right: none;
+}
+
+.eg-header {
+  background: var(--bg-sidebar);
+  font-weight: 500;
+}
+
+.eg-time {
+  background: var(--bg-sidebar);
+  opacity: 0.7;
+}
+
+.eg-slot {
+  background: var(--bg);
+  cursor: pointer;
+  min-height: 40px;
+}
+
+.eg-slot:hover {
+  filter: brightness(0.97);
+}
+
+.eg-slot.filled {
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.eg-slot-split {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.eg-slot-half {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+}
+
+.eg-slot-half:first-child {
+  border-bottom: 1px dashed var(--border);
+}
+
+.eg-slot-half:hover {
+  filter: brightness(0.97);
+}
+
+.eg-slot-half.filled {
+  font-weight: 500;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-panel {
+  background: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.modal-close {
+  border: none;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.modal-field select,
+.modal-field input {
+  font-size: 14px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.modal-field-hint {
+  font-size: 11px;
+  opacity: 0.65;
+  font-weight: 400;
+}
+
+.modal-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--accent-bg);
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
