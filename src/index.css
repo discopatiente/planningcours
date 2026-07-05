@@ -441,3 +441,23 @@ h2 {
   align-items: center;
   gap: 8px;
 }
+
+.periode-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-bg);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.periode-badge-ferie {
+  background: rgba(216, 90, 48, 0.15);
+  color: #d85a30;
+}
+
+.card-row-new {
+  background: var(--bg-sidebar);
+}
