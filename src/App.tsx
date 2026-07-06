@@ -5,7 +5,9 @@ import Sidebar from './components/Sidebar'
 import Login from './pages/Login'
 import Semaine from './pages/Semaine'
 import Gantt from './pages/Gantt'
-import Referentiel from './pages/Referentiel'
+import Chapitres from './pages/Chapitres'
+import UnitesDeCours from './pages/UnitesDeCours'
+import Progressions from './pages/Progressions'
 import Parametres from './pages/Parametres'
 import EmploiDuTemps from './pages/parametres/EmploiDuTemps'
 import Calendrier from './pages/parametres/Calendrier'
@@ -32,7 +34,9 @@ function AppRoutes() {
           <Route path="/" element={<Navigate to="/semaine" replace />} />
           <Route path="/semaine" element={<Semaine />} />
           <Route path="/gantt" element={<Gantt />} />
-          <Route path="/referentiel" element={<Referentiel />} />
+          <Route path="/chapitres" element={<Chapitres />} />
+          <Route path="/unites-de-cours" element={<UnitesDeCours />} />
+          <Route path="/progressions" element={<Progressions />} />
           <Route path="/parametres" element={<Parametres />}>
             <Route index element={<Navigate to="/parametres/matieres" replace />} />
             <Route path="emploi-du-temps" element={<EmploiDuTemps />} />

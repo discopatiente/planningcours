@@ -2,7 +2,8 @@ export interface Unite {
   id: string
   titre: string
   matiere_id: string
-  lien_pdf: string | null
+  chapitre_id: string | null
+  ordre_interne_par_defaut: number | null
   delai_impression_jours: number | null
   delai_eleves_jours: number | null
   instruction_eleves: string | null

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Unite } from '../types/unite'
 import {
+  assignUniteToChapitre,
   createUnite,
   deleteUnite,
   dupliquerUnite,
   fetchUnites,
+  reorderUnitesDansChapitre,
   updateUnite,
 } from '../lib/unites'
 
@@ -56,5 +58,37 @@ export function useUnites() {
     return copie
   }, [])
 
-  return { unites, loading, error, add, edit, remove, dupliquer }
+  const assignerChapitre = useCallback(async (id: string, chapitreId: string | null) => {
+    const updated = await assignUniteToChapitre(id, chapitreId)
+    setUnites((prev) => prev.map((u) => (u.id === id ? updated : u)))
+    return updated
+  }, [])
+
+  const reorderDansChapitre = useCallback(
+    (chapitreId: string, orderedIds: string[]) => {
+      setUnites((prev) => {
+        const rang = new Map(orderedIds.map((id, index) => [id, index + 1]))
+        return prev.map((u) =>
+          u.chapitre_id === chapitreId && rang.has(u.id)
+            ? { ...u, ordre_interne_par_defaut: rang.get(u.id)! }
+            : u,
+        )
+      })
+      reorderUnitesDansChapitre(orderedIds).catch(() => reload())
+    },
+    [reload],
+  )
+
+  return {
+    unites,
+    loading,
+    error,
+    reload,
+    add,
+    edit,
+    remove,
+    dupliquer,
+    assignerChapitre,
+    reorderDansChapitre,
+  }
 }
