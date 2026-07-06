@@ -24,7 +24,7 @@ Une application web hébergée pour un enseignant gérant 7+ classes et matière
 ```
 src/
   components/       composants réutilisables (boutons, modales, etc.)
-  pages/            une page par vue principale (Semaine, Gantt, Referentiel, Parametres)
+  pages/            une page par vue principale (Semaine, Gantt, UnitesDeCours, Progressions, Parametres)
   lib/              appels Supabase, helpers, moteur de projection
   hooks/            hooks React personnalisés
   types/            types TypeScript
@@ -40,6 +40,10 @@ src/
 
 **Débordement non bloquant** : si la progression contient plus d'unités que de créneaux disponibles dans l'année, ne pas bloquer. Enregistrer le nombre de séances en excès et afficher un avertissement visible dans la vue Gantt et dans les paramètres.
 
+**Chapitres, unités et archivage** : les unités de cours sont regroupées en chapitres, qui servent de trame par défaut (ordre interne) réutilisable. Une progression s'assemble chapitre par chapitre ; une fois un chapitre ajouté, l'ordre de ses unités devient une copie modifiable propre à cette progression — réordonner, retirer ou ajouter des unités dans une progression n'affecte jamais le chapitre d'origine ni les autres progressions. Archiver un chapitre (`archive = true`) n'est jamais une suppression : il disparait de la vue courante mais ses unités restent piochables pour construire de nouvelles progressions. Une unité peut survivre à son chapitre d'origine.
+
+**Ressources multiples, pas de mutualisation** : une unité porte plusieurs ressources typées (`support`, `video`, `exercice`, `devoir_possible`, `lien_utile`) via la table `ressources`, chacune propre à une seule unité. Ne jamais construire de logique de partage/mutualisation de ressources entre unités, même si l'URL est identique.
+
 **Règle évaluations** : les évaluations sont placées automatiquement, mais la règle s'applique sur l'ensemble des classes de l'enseignant — pas par classe. Si une semaine dépasse `max_evaluations_semaine` (défaut : 2) toutes classes confondues, décaler à la semaine suivante disponible.
 
 ## Ordre de développement
@@ -51,16 +55,17 @@ Suis cet ordre et ne passe à l'étape suivante que quand la précédente est te
 3. Paramètres — Matières (CRUD + couleurs)
 4. Paramètres — Emploi du temps (grille cliquable)
 5. Paramètres — Calendrier (import API Éducation nationale + édition manuelle)
-6. Référentiel — Unités de cours (CRUD)
-7. Référentiel — Progressions (ordonnancement drag-and-drop)
-8. Moteur de projection (algorithme de distribution des séances)
-9. Vue Semaine — sous-vue Liste
-10. Vue Semaine — sous-vue Calendrier
-11. Actions sur les séances (annulation, déplacement, ajout exceptionnel)
-12. Alertes de préparation (impression, instructions élèves)
-13. Vue Gantt avec zoom (3 niveaux : année, trimestre, mois)
-14. Push template vers instances
-15. Export PDF et CSV
+6. Page Unités de cours — gestion des chapitres (CRUD, archivage)
+7. Page Unités de cours — gestion des unités et de leurs ressources (CRUD, rattachement à un chapitre)
+8. Page Progressions — assemblage de chapitres et ordonnancement des unités avec déviation par progression
+9. Moteur de projection (algorithme de distribution des séances)
+10. Vue Semaine — sous-vue Liste
+11. Vue Semaine — sous-vue Calendrier
+12. Actions sur les séances (annulation, déplacement, ajout exceptionnel)
+13. Alertes de préparation (impression, instructions élèves)
+14. Vue Gantt avec zoom (3 niveaux : année, trimestre, mois)
+15. Push template vers instances
+16. Export PDF et CSV
 
 ## Ce qu'il ne faut pas faire
 
@@ -69,6 +74,7 @@ Suis cet ordre et ne passe à l'étape suivante que quand la précédente est te
 - Ne pas bloquer l'utilisateur en cas de conflit ou de débordement — toujours afficher un avertissement et laisser sauvegarder
 - Ne pas construire de fonctionnalité d'édition de documents de cours — les documents sont des liens PDF externes, c'est tout
 - Ne pas prévoir de gestion multi-utilisateur — l'application est strictement mono-utilisateur
+- Ne pas implémenter les activités optionnelles activables en cours d'année (unité de réserve insérée seulement si une classe avance vite ou a des difficultés) — besoin identifié mais reporté
 
 ## API Éducation nationale
 

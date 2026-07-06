@@ -32,3 +32,6 @@ dist-ssr
 *.sw?
 .vercel
 .env*
+
+# Notes de travail personnelles (hors dépôt)
+referentiel_design_notes.md

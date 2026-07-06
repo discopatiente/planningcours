@@ -17,23 +17,45 @@ Application web hébergée, usage solo, pour un enseignant gérant 7+ classes et
 
 ## Architecture des données
 
-### Niveau 1 — Unités de cours (templates)
+### Niveau 1 — Chapitres et unités de cours (templates, la réserve)
 
-L'élément de base du référentiel. Champs :
+Le référentiel de contenu vit dans la page « Unités de cours » : un espace de stockage organisé, sans notion de temps ni de calendrier. Il est structuré en deux niveaux.
+
+**Chapitres** — un chapitre regroupe des unités de cours et sert de trame réutilisable pour construire des progressions.
+
+- `id`
+- `nom`
+- `matiere_id`
+- `archive` (booléen — un chapitre archivé disparaît de la vue courante de la réserve mais reste accessible dans une section « Archives » ; ses unités restent piochables lors de la construction d'une progression. L'archivage n'est jamais une suppression.)
+- `created_at`, `updated_at`
+
+**Unités de cours** — l'élément de base du référentiel.
 
 - `id`
 - `titre`
 - `matiere_id` (référence vers la table matières)
-- `lien_pdf` (URL externe)
+- `chapitre_id` (référence vers un chapitre — optionnelle, une unité doit pouvoir survivre à son chapitre d'origine et être reprise ailleurs)
+- `ordre_interne_par_defaut` (entier — position de l'unité dans la trame par défaut de son chapitre, sert de base lorsqu'un chapitre est ajouté à une progression)
 - `delai_impression_jours` (entier — nombre de jours avant le cours pour imprimer)
 - `delai_eleves_jours` (entier — nombre de jours avant le cours pour prévenir les élèves)
 - `instruction_eleves` (texte libre — contenu du message à transmettre aux élèves)
 - `notes` (texte libre — observations personnelles)
 - `created_at`, `updated_at`
 
-### Niveau 2 — Progressions (templates)
+**Ressources** — remplace l'ancien champ unique `lien_pdf`. Une unité peut porter plusieurs ressources de natures différentes (support de cours, vidéos, exercices, devoirs possibles). Les ressources appartiennent à une seule unité, sans mutualisation entre unités : si un même lien réapparait dans deux unités, ce sont deux ressources distinctes.
 
-Un ordonnancement d'unités pour une matière donnée. Plusieurs progressions peuvent utiliser les mêmes unités dans un ordre différent.
+- `id`
+- `unite_id`
+- `type` (enum : `support`, `video`, `exercice`, `devoir_possible`, `lien_utile`)
+- `libelle`
+- `url`
+- `ordre` (entier)
+
+> Le document de cours principal devient une ressource de type `support`.
+
+### Niveau 2 — Progressions (templates, la temporalité)
+
+La page « Progressions » est là où les unités reçoivent une temporalité. Une progression s'assemble chapitre par chapitre — elle n'est jamais préremplie automatiquement avec tout le contenu du référentiel. Plusieurs progressions peuvent utiliser les mêmes unités dans un ordre différent.
 
 - `id`
 - `nom`
@@ -44,6 +66,8 @@ Table de jointure `progression_unites` :
 - `progression_id`
 - `unite_id`
 - `position` (entier — ordre dans la progression)
+
+Quand un chapitre est ajouté à une progression, ses unités arrivent dans l'ordre défini par `ordre_interne_par_defaut`, mais cet ordre est copié dans `progression_unites.position` : à partir de là, c'est une copie modifiable propre à cette progression. L'utilisateur peut réordonner, retirer ou ajouter des unités sans que cela affecte le chapitre d'origine ni les autres progressions. C'est un modèle hybride : le chapitre fournit une trame par défaut pour gagner du temps, la progression garde la liberté d'en dévier par classe.
 
 ### Niveau 3 — Plannings annuels (instances)
 
@@ -65,12 +89,11 @@ Table `seances` (instances des unités dans un planning) :
 - `motif_annulation` (texte libre, optionnel)
 - `notes_seance` (texte libre, observations post-cours)
 - `override_titre` (si l'unité a été modifiée localement)
-- `override_lien_pdf`
 - `override_instruction_eleves`
 - `override_delai_impression_jours`
 - `override_delai_eleves_jours`
 
-> Les champs `override_*` permettent de modifier localement une séance sans toucher au template. Si null, la séance hérite des valeurs du template.
+> Les champs `override_*` permettent de modifier localement une séance sans toucher au template. Si null, la séance hérite des valeurs du template. Le champ `override_lien_pdf` disparait avec le passage aux ressources multiples ; la manière dont une séance surchargera localement ses ressources reste à concevoir lors de la construction du moteur de projection (étape 9).
 
 ### Niveau 4 — Évaluations (instances)
 
@@ -125,7 +148,7 @@ Tout événement modifiant le calendrier d'un planning déclenche un recalcul pa
 ### Push depuis le template vers les instances
 
 Quand l'utilisateur modifie une unité dans le référentiel et choisit de pousser vers des instances :
-- Seuls les champs de contenu sont mis à jour (`titre`, `lien_pdf`, `instruction_eleves`, `delai_impression_jours`, `delai_eleves_jours`).
+- Seuls les champs de contenu sont mis à jour (`titre`, `instruction_eleves`, `delai_impression_jours`, `delai_eleves_jours`, ainsi que les ressources rattachées).
 - Les champs de position (`date`, `heure_debut`, `statut`) ne sont jamais affectés.
 - L'utilisateur choisit les classes cibles via une liste à cocher.
 
@@ -178,28 +201,43 @@ Trois niveaux de zoom accessibles via boutons +/− :
 - Blocs passés en opacité réduite.
 - Alerte de débordement visible en permanence dans la barre du haut si applicable.
 
-### 3. Référentiel
+### 3. Unités de cours (la réserve)
 
-Interface en trois colonnes :
+La réserve, sans notion de temps ni de calendrier. Interface en trois colonnes :
 
-**Colonne gauche — Unités**
-- Liste groupée par matière, chaque matière rétractable.
+**Colonne gauche — Chapitres**
+- Liste des chapitres groupés par matière, chaque matière rétractable.
+- Section « Archives » séparée pour les chapitres archivés.
 - Recherche par texte.
-- Bouton "Nouvelle unité".
-- Clic sur une unité → affichage dans la colonne du milieu.
+- Boutons "Nouveau chapitre" et archivage/désarchivage.
+- Clic sur un chapitre → affichage de ses unités (dans l'ordre de la trame par défaut) dans la colonne du milieu.
 
-**Colonne du milieu — Détail de l'unité**
+**Colonne du milieu — Unités du chapitre**
+- Liste des unités du chapitre sélectionné, réordonnables (met à jour `ordre_interne_par_defaut`).
+- Bouton "Nouvelle unité" (rattachée au chapitre courant).
+- Clic sur une unité → affichage dans la colonne de droite.
+
+**Colonne droite — Détail de l'unité**
 - Deux onglets : Contenu / Instances.
-- Onglet Contenu : titre, matière, lien PDF, délais de préparation, instruction élèves, notes.
+- Onglet Contenu : titre, matière, chapitre, délais de préparation, instruction élèves, notes, et la liste de ses ressources (ajout, édition, réordonnancement, suppression — support, vidéo, exercice, devoir possible, lien utile).
 - Onglet Instances : liste des classes qui utilisent cette unité dans leur planning en cours, avec bouton de push individuel ou global.
-- Actions en bas : Modifier, Dupliquer, Supprimer.
+- Actions en bas : Modifier, Dupliquer, Changer de chapitre, Supprimer.
 
-**Colonne droite — Progressions**
-- Liste des progressions groupées par matière, avec barre de progression (avancement de l'année).
-- Clic sur une progression → affichage de l'ordre des unités en dessous, réordonnables par drag-and-drop.
-- Chaque unité dans la liste indique son statut (passé, en cours, à venir).
+### 4. Progressions (la temporalité)
 
-### 4. Paramètres
+Là où les unités reçoivent une date. Interface en deux colonnes :
+
+**Colonne gauche — Liste des progressions**
+- Progressions groupées par matière, avec barre de progression (avancement de l'année).
+- Bouton "Nouvelle progression".
+
+**Colonne droite — Construction de la progression sélectionnée**
+- Sélecteur pour ajouter un chapitre (y compris depuis les Archives) : ses unités sont importées dans l'ordre de leur trame par défaut, en copie propre à cette progression.
+- Liste des unités de la progression, réordonnables par drag-and-drop, avec possibilité de retirer une unité ou d'en ajouter une isolément (sans passer par tout son chapitre).
+- Chaque unité dans la liste indique son statut (passé, en cours, à venir) et le chapitre dont elle est issue.
+- Ces modifications n'affectent jamais le chapitre d'origine ni les autres progressions.
+
+### 5. Paramètres
 
 Navigation secondaire à gauche avec les sections :
 
@@ -228,11 +266,11 @@ Navigation secondaire à gauche avec les sections :
 
 ## Règles UX importantes
 
-- La navigation principale (sidebar gauche) contient : Semaine, Gantt, Référentiel, Paramètres.
+- La navigation principale (sidebar gauche) contient : Semaine, Gantt, Unités de cours, Progressions, Paramètres.
 - Le toggle Liste/Calendrier est dans la vue Semaine uniquement, en haut à droite — pas dans la sidebar.
 - Annuler une séance et la déplacer sont deux actions distinctes avec des effets différents sur la progression : l'annulation décale, le déplacement ne décale pas.
 - Aucune action ne bloque l'utilisateur : les débordements et conflits sont signalés sans empêcher la sauvegarde.
-- Code couleur par matière cohérent dans toutes les vues (semaine, Gantt, référentiel).
+- Code couleur par matière cohérent dans toutes les vues (semaine, Gantt, unités de cours, progressions).
 - Les séances passées sont toujours affichées en opacité réduite.
 
 ---
@@ -243,13 +281,20 @@ Navigation secondaire à gauche avec les sections :
 2. Création du schéma de base de données.
 3. Module Paramètres — Matières et Emploi du temps (saisie des données de base).
 4. Module Paramètres — Calendrier (import API + édition manuelle).
-5. Module Référentiel — Unités de cours (CRUD).
-6. Module Référentiel — Progressions (ordonnancement).
-7. Moteur de projection (algorithme de distribution des séances).
-8. Vue Semaine — sous-vue Liste.
-9. Vue Semaine — sous-vue Calendrier.
-10. Gestion des actions sur les séances (annulation, déplacement, ajout exceptionnel).
-11. Système d'alertes de préparation.
-12. Vue Gantt avec zoom.
-13. Système de push template → instances.
-14. Export PDF et CSV.
+5. Page Unités de cours — gestion des chapitres (CRUD, archivage).
+6. Page Unités de cours — gestion des unités et de leurs ressources (CRUD, rattachement à un chapitre).
+7. Page Progressions — assemblage de chapitres et ordonnancement des unités avec déviation par progression.
+8. Moteur de projection (algorithme de distribution des séances).
+9. Vue Semaine — sous-vue Liste.
+10. Vue Semaine — sous-vue Calendrier.
+11. Gestion des actions sur les séances (annulation, déplacement, ajout exceptionnel).
+12. Système d'alertes de préparation.
+13. Vue Gantt avec zoom.
+14. Système de push template → instances.
+15. Export PDF et CSV.
+
+---
+
+## Évolutions futures (hors périmètre actuel)
+
+- **Activités optionnelles activables en cours d'année** : une unité en réserve dans un chapitre, insérée dans le planning seulement si une classe avance vite ou rencontre des difficultés. Besoin identifié mais reporté — ne pas l'implémenter pour l'instant.
