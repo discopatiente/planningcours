@@ -1,6 +1,6 @@
 export type Semaine = 'A' | 'B'
 
-function lundiDeLaSemaine(dateStr: string): Date {
+export function lundiDeLaSemaine(dateStr: string): Date {
   const date = new Date(`${dateStr}T00:00:00`)
   const jour = date.getDay()
   const decalage = jour === 0 ? -6 : 1 - jour

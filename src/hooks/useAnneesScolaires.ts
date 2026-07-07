@@ -5,6 +5,7 @@ import {
   fetchAnneesScolaires,
   setAnneeActive,
   updateReferenceSemaineA,
+  updateTrimestres,
 } from '../lib/anneesScolaires'
 
 export function useAnneesScolaires() {
@@ -47,5 +48,13 @@ export function useAnneesScolaires() {
     [reload],
   )
 
-  return { annees, loading, add, activer, definirReferenceSemaineA }
+  const definirTrimestres = useCallback(
+    async (id: string, trimestre2Debut: string | null, trimestre3Debut: string | null) => {
+      await updateTrimestres(id, trimestre2Debut, trimestre3Debut)
+      await reload()
+    },
+    [reload],
+  )
+
+  return { annees, loading, add, activer, definirReferenceSemaineA, definirTrimestres }
 }

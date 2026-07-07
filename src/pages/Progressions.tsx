@@ -4,6 +4,10 @@ import { useUnites } from '../hooks/useUnites'
 import { useChapitres } from '../hooks/useChapitres'
 import { useProgressions } from '../hooks/useProgressions'
 import { useProgressionUnites } from '../hooks/useProgressionUnites'
+import { useAnneesScolaires } from '../hooks/useAnneesScolaires'
+import { useClasses } from '../hooks/useClasses'
+import { useEmploiDuTemps } from '../hooks/useEmploiDuTemps'
+import { usePlannings } from '../hooks/usePlannings'
 import Modal from '../components/Modal'
 
 function Progressions() {
@@ -36,6 +40,49 @@ function Progressions() {
     remove: retirerUnite,
     reorder,
   } = useProgressionUnites(progressionSelectionnee?.id ?? null)
+
+  const { annees } = useAnneesScolaires()
+  const anneeActive = annees.find((a) => a.active) ?? null
+  const { classes } = useClasses()
+  const { creneaux } = useEmploiDuTemps(anneeActive?.id ?? null)
+  const {
+    plannings,
+    error: erreurPlannings,
+    generer: genererPlanningPourClasse,
+  } = usePlannings(anneeActive?.id ?? null)
+  const [generationEnCours, setGenerationEnCours] = useState<string | null>(null)
+  const [resultatsGeneration, setResultatsGeneration] = useState<
+    Record<string, { nbSeances: number; nbEvaluations: number; nbSeancesEnExces: number }>
+  >({})
+
+  const classesEligibles = useMemo(() => {
+    if (!progressionSelectionnee) return []
+    const classeIds = new Set(
+      creneaux.filter((c) => c.matiere_id === progressionSelectionnee.matiere_id).map((c) => c.classe_id),
+    )
+    return classes.filter((c) => classeIds.has(c.id))
+  }, [classes, creneaux, progressionSelectionnee])
+
+  async function handleGenererPlanning(classeId: string) {
+    if (!progressionSelectionnee || !anneeActive) return
+    setGenerationEnCours(classeId)
+    setErreurAjout(null)
+    try {
+      const resultat = await genererPlanningPourClasse(classeId, progressionSelectionnee, anneeActive)
+      setResultatsGeneration((prev) => ({
+        ...prev,
+        [classeId]: {
+          nbSeances: resultat.nbSeances,
+          nbEvaluations: resultat.nbEvaluations,
+          nbSeancesEnExces: resultat.nbSeancesEnExces,
+        },
+      }))
+    } catch (err) {
+      setErreurAjout(err instanceof Error ? err.message : String(err))
+    } finally {
+      setGenerationEnCours(null)
+    }
+  }
 
   const groupes = useMemo(
     () =>
@@ -357,6 +404,69 @@ function Progressions() {
                   Ajouter
                 </button>
               </div>
+
+              <h3 className="section-title" style={{ marginTop: '1.5rem' }}>
+                Plannings {anneeActive ? `— ${anneeActive.libelle}` : ''}
+              </h3>
+              {erreurPlannings && <p className="error-text">{erreurPlannings}</p>}
+              {!anneeActive ? (
+                <p className="section-desc" style={{ margin: 0 }}>
+                  Aucune année scolaire active.
+                </p>
+              ) : classesEligibles.length === 0 ? (
+                <p className="section-desc" style={{ margin: 0 }}>
+                  Aucune classe n'a de créneau pour cette matière dans l'emploi du temps de l'année
+                  active.
+                </p>
+              ) : (
+                <div className="card">
+                  {classesEligibles.map((classe) => {
+                    const planningExistant = plannings.find(
+                      (p) => p.classe_id === classe.id && p.progression_id === progressionSelectionnee.id,
+                    )
+                    const resultat = resultatsGeneration[classe.id]
+                    return (
+                      <div className="card-row" key={classe.id}>
+                        <span className="card-row-label">{classe.nom}</span>
+                        {resultat ? (
+                          <span className="section-desc" style={{ margin: 0 }}>
+                            {resultat.nbSeances} séance(s), {resultat.nbEvaluations} évaluation(s)
+                            {resultat.nbSeancesEnExces > 0 && (
+                              <span className="error-text"> — {resultat.nbSeancesEnExces} en excès</span>
+                            )}
+                          </span>
+                        ) : planningExistant ? (
+                          <span className="section-desc" style={{ margin: 0 }}>
+                            Planning généré
+                            {planningExistant.nb_seances_en_exces > 0 && (
+                              <span className="error-text">
+                                {' '}
+                                — {planningExistant.nb_seances_en_exces} en excès
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="section-desc" style={{ margin: 0 }}>
+                            Aucun planning
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="btn-sm btn-primary"
+                          disabled={generationEnCours === classe.id}
+                          onClick={() => handleGenererPlanning(classe.id)}
+                        >
+                          {generationEnCours === classe.id
+                            ? 'Génération…'
+                            : planningExistant
+                              ? 'Régénérer'
+                              : 'Générer'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           ) : (
             <div className="referentiel-detail-empty">Sélectionne une progression à gauche.</div>

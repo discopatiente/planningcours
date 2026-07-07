@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Parametres } from '../types/parametres'
-import { fetchParametres, updateAcademie } from '../lib/parametres'
+import { fetchParametres, updateAcademie, updateReglesEvaluations } from '../lib/parametres'
 
 export function useParametres() {
   const [parametres, setParametres] = useState<Parametres | null>(null)
@@ -18,5 +18,12 @@ export function useParametres() {
     setParametres(await updateAcademie(academie || null))
   }, [])
 
-  return { parametres, loading, error, definirAcademie }
+  const definirReglesEvaluations = useCallback(
+    async (changes: Partial<Pick<Parametres, 'evaluations_par_trimestre' | 'max_evaluations_semaine'>>) => {
+      setParametres(await updateReglesEvaluations(changes))
+    },
+    [],
+  )
+
+  return { parametres, loading, error, definirAcademie, definirReglesEvaluations }
 }

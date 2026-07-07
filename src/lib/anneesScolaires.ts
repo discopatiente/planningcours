@@ -38,6 +38,21 @@ export async function updateReferenceSemaineA(
   return data
 }
 
+export async function updateTrimestres(
+  id: string,
+  trimestre2Debut: string | null,
+  trimestre3Debut: string | null,
+): Promise<AnneeScolaire> {
+  const { data, error } = await supabase
+    .from('annees_scolaires')
+    .update({ trimestre_2_debut: trimestre2Debut, trimestre_3_debut: trimestre3Debut })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
 export async function setAnneeActive(id: string): Promise<void> {
   const { error: clearError } = await supabase
     .from('annees_scolaires')

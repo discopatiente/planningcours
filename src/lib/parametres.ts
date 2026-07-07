@@ -17,3 +17,16 @@ export async function updateAcademie(academie: string | null): Promise<Parametre
   if (error) throw error
   return data
 }
+
+export async function updateReglesEvaluations(
+  changes: Partial<Pick<Parametres, 'evaluations_par_trimestre' | 'max_evaluations_semaine'>>,
+): Promise<Parametres> {
+  const { data, error } = await supabase
+    .from('parametres')
+    .update(changes)
+    .eq('id', 1)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
