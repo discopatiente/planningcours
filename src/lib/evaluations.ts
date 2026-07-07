@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import type { Evaluation } from '../types/evaluation'
+import type { Evaluation, EvaluationAvecPlanning, StatutEvaluation } from '../types/evaluation'
 
 // Toutes les évaluations déjà planifiées pour une année scolaire, tous
 // plannings (donc toutes classes) confondus — nécessaire pour faire
@@ -19,6 +19,36 @@ export async function fetchEvaluationsPlanning(planningId: string): Promise<Eval
     .select('*')
     .eq('planning_id', planningId)
     .order('date')
+  if (error) throw error
+  return data
+}
+
+// Toutes les évaluations d'une semaine (toutes classes de l'année
+// confondues), pour la vue Semaine.
+export async function fetchEvaluationsSemaine(
+  anneeScolaireId: string,
+  dateDebut: string,
+  dateFin: string,
+): Promise<EvaluationAvecPlanning[]> {
+  const { data, error } = await supabase
+    .from('evaluations')
+    .select('*, planning:plannings!inner(classe_id, progression_id, annee_scolaire_id)')
+    .eq('planning.annee_scolaire_id', anneeScolaireId)
+    .gte('date', dateDebut)
+    .lte('date', dateFin)
+    .order('date')
+    .order('heure_debut')
+  if (error) throw error
+  return data
+}
+
+export async function updateStatutEvaluation(id: string, statut: StatutEvaluation): Promise<Evaluation> {
+  const { data, error } = await supabase
+    .from('evaluations')
+    .update({ statut })
+    .eq('id', id)
+    .select()
+    .single()
   if (error) throw error
   return data
 }

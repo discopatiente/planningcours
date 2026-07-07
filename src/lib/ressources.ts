@@ -11,6 +11,15 @@ export async function fetchRessources(uniteId: string): Promise<Ressource[]> {
   return data
 }
 
+// Toutes les ressources, toutes unités confondues — pour les vues qui
+// affichent plusieurs unités à la fois (Semaine, Gantt) sans requête par
+// unité.
+export async function fetchToutesRessources(): Promise<Ressource[]> {
+  const { data, error } = await supabase.from('ressources').select('*').order('ordre')
+  if (error) throw error
+  return data
+}
+
 export async function createRessource(
   uniteId: string,
   type: TypeRessource,

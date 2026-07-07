@@ -9,3 +9,7 @@ export interface Evaluation {
   titre: string | null
   statut: StatutEvaluation
 }
+
+export interface EvaluationAvecPlanning extends Evaluation {
+  planning: { classe_id: string; progression_id: string }
+}

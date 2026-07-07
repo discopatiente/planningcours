@@ -14,3 +14,7 @@ export interface Seance {
   override_delai_impression_jours: number | null
   override_delai_eleves_jours: number | null
 }
+
+export interface SeanceAvecPlanning extends Seance {
+  planning: { classe_id: string; progression_id: string }
+}

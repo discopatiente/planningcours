@@ -2,25 +2,11 @@ import type { AnneeScolaire } from '../types/anneeScolaire'
 import type { Creneau } from '../types/creneau'
 import type { PeriodeCalendrier } from '../types/periodeCalendrier'
 import { calculerSemaine, lundiDeLaSemaine } from './semaineAB'
+import { ajouterJours, toISODate } from './dates'
 
 export interface CreneauDate {
   date: string
   heure_debut: string
-}
-
-// N'utilise jamais toISOString() ici : elle convertit en UTC et décale la
-// date d'un jour dans les fuseaux en avance sur UTC (ex. Europe/Paris l'été).
-function toISODate(date: Date): string {
-  const annee = date.getFullYear()
-  const mois = String(date.getMonth() + 1).padStart(2, '0')
-  const jour = String(date.getDate()).padStart(2, '0')
-  return `${annee}-${mois}-${jour}`
-}
-
-function ajouterJours(date: Date, jours: number): Date {
-  const copie = new Date(date)
-  copie.setDate(copie.getDate() + jours)
-  return copie
 }
 
 function dateDansPeriode(date: string, periodes: PeriodeCalendrier[]): boolean {
