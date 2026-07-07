@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useAnneesScolaires } from '../hooks/useAnneesScolaires'
 import { useClasses } from '../hooks/useClasses'
 import { useMatieres } from '../hooks/useMatieres'
@@ -13,6 +13,13 @@ import type { SeanceAvecPlanning } from '../types/seance'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
 
 const NOMS_JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
+
+// Grille de la sous-vue Calendrier : mêmes heures que la grille de l'emploi
+// du temps (Paramètres), pour rester cohérent avec les créneaux qu'on peut y
+// créer.
+const HEURES_GRILLE = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+const HAUTEUR_LIGNE = 56
+const HAUTEUR_ENTETE = 32
 
 type ItemJour =
   | { kind: 'seance'; heure: string; data: SeanceAvecPlanning }
@@ -43,6 +50,7 @@ function Semaine() {
   const { unites } = useUnites()
   const { ressources } = useRessourcesToutes()
 
+  const [vue, setVue] = useState<'liste' | 'calendrier'>('liste')
   const [dateReference, setDateReference] = useState(() => toISODate(new Date()))
   const lundi = toISODate(lundiDeLaSemaine(dateReference))
   const jours = useMemo(
@@ -51,6 +59,13 @@ function Semaine() {
   )
   const vendredi = jours[4]
   const aujourdhui = toISODate(new Date())
+
+  const [heureActuelle, setHeureActuelle] = useState(() => new Date())
+  useEffect(() => {
+    if (vue !== 'calendrier') return
+    const intervalle = setInterval(() => setHeureActuelle(new Date()), 30_000)
+    return () => clearInterval(intervalle)
+  }, [vue])
 
   const { seances, evaluations, loading, error, marquerSeanceFaite, marquerEvaluationFaite } = useSemaine(
     anneeActive?.id ?? null,
@@ -92,6 +107,32 @@ function Semaine() {
     return map
   }, [jours, seances, evaluations])
 
+  function detailsItem(item: ItemJour) {
+    const classe = classesParId.get(item.data.planning.classe_id)
+    const matiere = matiereDeProgression(item.data.planning.progression_id)
+    const estEvaluation = item.kind === 'evaluation'
+    const titre = estEvaluation
+      ? (item.data as EvaluationAvecPlanning).titre ?? 'Évaluation'
+      : (item.data as SeanceAvecPlanning).override_titre ??
+        unitesParId.get((item.data as SeanceAvecPlanning).unite_id ?? '')?.titre ??
+        '(unité supprimée)'
+    const ressource = !estEvaluation
+      ? ressourcePrincipaleParUnite.get((item.data as SeanceAvecPlanning).unite_id ?? '')
+      : undefined
+    return { classe, matiere, estEvaluation, titre, ressource }
+  }
+
+  function toggleFait(item: ItemJour, fait: boolean) {
+    if (item.kind === 'evaluation') marquerEvaluationFaite(item.data.id, fait)
+    else marquerSeanceFaite(item.data.id, fait)
+  }
+
+  const aujourdhuiDansLaSemaine = jours.includes(aujourdhui)
+  const decimaleActuelle = heureActuelle.getHours() + heureActuelle.getMinutes() / 60
+  const ligneActuelleVisible =
+    aujourdhuiDansLaSemaine && decimaleActuelle >= HEURES_GRILLE[0] && decimaleActuelle < HEURES_GRILLE[HEURES_GRILLE.length - 1] + 1
+  const offsetLigneActuelle = HAUTEUR_ENTETE + (decimaleActuelle - HEURES_GRILLE[0]) * HAUTEUR_LIGNE
+
   return (
     <div>
       <h2 className="section-title">Semaine</h2>
@@ -112,6 +153,23 @@ function Semaine() {
             <span className="semaine-badge">{calculerSemaine(lundi, anneeActive.reference_semaine_a_date) ?? '?'}</span>
           )}
         </span>
+        <div style={{ flex: 1 }} />
+        <div className="semaine-vue-toggle">
+          <button
+            type="button"
+            className={`btn-sm${vue === 'liste' ? ' btn-primary' : ''}`}
+            onClick={() => setVue('liste')}
+          >
+            Liste
+          </button>
+          <button
+            type="button"
+            className={`btn-sm${vue === 'calendrier' ? ' btn-primary' : ''}`}
+            onClick={() => setVue('calendrier')}
+          >
+            Calendrier
+          </button>
+        </div>
       </div>
 
       {error && <p className="error-text">{error}</p>}
@@ -119,7 +177,8 @@ function Semaine() {
       {!anneeActive ? (
         <p className="section-desc">Aucune année scolaire active.</p>
       ) : (
-        !loading && (
+        !loading &&
+        (vue === 'liste' ? (
           <div className="semaine-jours">
             {jours.map((jour, index) => (
               <div className="semaine-jour" key={jour}>
@@ -130,20 +189,8 @@ function Semaine() {
                 {itemsParJour.get(jour)?.length === 0 && <p className="semaine-jour-vide">Aucun cours</p>}
 
                 {itemsParJour.get(jour)?.map((item) => {
-                  const classe = classesParId.get(item.data.planning.classe_id)
-                  const matiere = matiereDeProgression(item.data.planning.progression_id)
+                  const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item)
                   const passee = jour < aujourdhui
-                  const estEvaluation = item.kind === 'evaluation'
-
-                  const titre = estEvaluation
-                    ? item.data.titre ?? 'Évaluation'
-                    : (item.data as SeanceAvecPlanning).override_titre ??
-                      unitesParId.get((item.data as SeanceAvecPlanning).unite_id ?? '')?.titre ??
-                      '(unité supprimée)'
-
-                  const ressource = !estEvaluation
-                    ? ressourcePrincipaleParUnite.get((item.data as SeanceAvecPlanning).unite_id ?? '')
-                    : undefined
 
                   return (
                     <div
@@ -161,11 +208,7 @@ function Semaine() {
                       <input
                         type="checkbox"
                         checked={item.data.statut === 'fait'}
-                        onChange={(e) =>
-                          estEvaluation
-                            ? marquerEvaluationFaite(item.data.id, e.target.checked)
-                            : marquerSeanceFaite(item.data.id, e.target.checked)
-                        }
+                        onChange={(e) => toggleFait(item, e.target.checked)}
                         title="Fait"
                       />
                       {ressource && (
@@ -179,7 +222,72 @@ function Semaine() {
               </div>
             ))}
           </div>
-        )
+        ) : (
+          <div className="calendrier-wrapper">
+            <div
+              className="calendrier-grille"
+              style={{
+                gridTemplateRows: `${HAUTEUR_ENTETE}px repeat(${HEURES_GRILLE.length}, ${HAUTEUR_LIGNE}px)`,
+              }}
+            >
+              <div className="cg-cell cg-entete" />
+              {jours.map((jour, index) => (
+                <div
+                  className={`cg-cell cg-entete${jour === aujourdhui ? ' aujourdhui' : ''}`}
+                  key={jour}
+                >
+                  {NOMS_JOURS[index].slice(0, 3)} <span className="semaine-jour-date">{formatJour(jour)}</span>
+                </div>
+              ))}
+
+              {HEURES_GRILLE.map((heure) => (
+                <Fragment key={heure}>
+                  <div className="cg-cell cg-heure">
+                    {heure}h
+                  </div>
+                  {jours.map((jour) => {
+                    const items = (itemsParJour.get(jour) ?? []).filter(
+                      (item) => Number(item.heure.slice(0, 2)) === heure,
+                    )
+                    const jourVide = itemsParJour.get(jour)?.length === 0
+                    const passee = jour < aujourdhui
+                    return (
+                      <div className={`cg-cell${jourVide ? ' cg-cell-vide' : ''}`} key={`${jour}-${heure}`}>
+                        {items.map((item) => {
+                          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item)
+                          return (
+                            <div
+                              key={item.data.id}
+                              className={`cg-evenement${estEvaluation ? ' semaine-item-evaluation' : ''}${passee ? ' semaine-item-passee' : ''}`}
+                              style={!estEvaluation ? { borderLeftColor: matiere?.couleur ?? '#999' } : undefined}
+                            >
+                              <span className="cg-evenement-titre">{titre}</span>
+                              <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
+                              <input
+                                type="checkbox"
+                                checked={item.data.statut === 'fait'}
+                                onChange={(e) => toggleFait(item, e.target.checked)}
+                                title="Fait"
+                              />
+                              {ressource && (
+                                <a href={ressource.url} target="_blank" rel="noreferrer" title="Ouvrir la ressource">
+                                  ↗
+                                </a>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </Fragment>
+              ))}
+            </div>
+            {ligneActuelleVisible && (
+              <div className="cg-ligne-actuelle" style={{ top: offsetLigneActuelle }} />
+            )}
+          </div>
+        ))
       )}
     </div>
   )

@@ -888,3 +888,114 @@ h2 {
   color: var(--accent);
   text-decoration: none;
 }
+
+.semaine-vue-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+/* Sous-vue Calendrier */
+
+.calendrier-wrapper {
+  position: relative;
+}
+
+.calendrier-grille {
+  display: grid;
+  grid-template-columns: 56px repeat(5, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cg-cell {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 2px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.cg-cell:nth-child(6n) {
+  border-right: none;
+}
+
+.cg-entete {
+  background: var(--bg-sidebar);
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.cg-entete.aujourdhui {
+  color: var(--accent);
+}
+
+.cg-heure {
+  font-size: 11px;
+  opacity: 0.7;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.cg-cell-vide {
+  background: var(--bg-sidebar);
+}
+
+.cg-evenement {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(128, 128, 128, 0.14);
+  border-left: 3px solid #999;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
+.cg-evenement.semaine-item-evaluation {
+  border-left-color: #d85a30;
+}
+
+.cg-evenement-titre {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cg-evenement-classe {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.cg-evenement input[type='checkbox'] {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.cg-evenement a {
+  flex-shrink: 0;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.cg-ligne-actuelle {
+  position: absolute;
+  left: 56px;
+  right: 0;
+  height: 2px;
+  background: #e5484d;
+  pointer-events: none;
+  z-index: 2;
+}
