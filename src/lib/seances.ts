@@ -101,6 +101,83 @@ export async function insertSeanceTrouAnnule(
   return data
 }
 
+export interface InstanceUnite {
+  seanceId: string
+  planningId: string
+  classeId: string
+  aOverride: boolean
+}
+
+// Classes utilisant cette unité dans leur planning de l'année active :
+// une override est considérée présente dès qu'un des champs de contenu
+// surchargeables diverge du template (titre, instruction élèves, délais).
+interface LigneInstanceBrute {
+  id: string
+  planning_id: string
+  override_titre: string | null
+  override_instruction_eleves: string | null
+  override_delai_impression_jours: number | null
+  override_delai_eleves_jours: number | null
+  planning: { classe_id: string; annee_scolaire_id: string }
+}
+
+export async function fetchInstancesUnite(uniteId: string, anneeScolaireId: string): Promise<InstanceUnite[]> {
+  const { data, error } = await supabase
+    .from('seances')
+    .select(
+      'id, planning_id, override_titre, override_instruction_eleves, override_delai_impression_jours, override_delai_eleves_jours, planning:plannings!inner(classe_id, annee_scolaire_id)',
+    )
+    .eq('unite_id', uniteId)
+    .eq('planning.annee_scolaire_id', anneeScolaireId)
+    .returns<LigneInstanceBrute[]>()
+  if (error) throw error
+  return data.map((s) => ({
+    seanceId: s.id,
+    planningId: s.planning_id,
+    classeId: s.planning.classe_id,
+    aOverride:
+      s.override_titre !== null ||
+      s.override_instruction_eleves !== null ||
+      s.override_delai_impression_jours !== null ||
+      s.override_delai_eleves_jours !== null,
+  }))
+}
+
+// Pousse le contenu du template vers les instances des classes choisies : ne
+// touche qu'aux champs de contenu (titre, instruction élèves, délais), jamais
+// à la date/heure/statut. Les ressources ne sont pas dupliquées par séance —
+// elles sont déjà lues directement depuis l'unité, donc toujours à jour sans
+// action de push.
+export async function pousserTemplateVersInstances(
+  uniteId: string,
+  classeIds: string[],
+  anneeScolaireId: string,
+): Promise<number> {
+  if (classeIds.length === 0) return 0
+  const { data: cibles, error: selectError } = await supabase
+    .from('seances')
+    .select('id, planning:plannings!inner(classe_id, annee_scolaire_id)')
+    .eq('unite_id', uniteId)
+    .eq('planning.annee_scolaire_id', anneeScolaireId)
+    .in('planning.classe_id', classeIds)
+  if (selectError) throw selectError
+
+  const seanceIds = cibles.map((s) => s.id)
+  if (seanceIds.length === 0) return 0
+
+  const { error: updateError } = await supabase
+    .from('seances')
+    .update({
+      override_titre: null,
+      override_instruction_eleves: null,
+      override_delai_impression_jours: null,
+      override_delai_eleves_jours: null,
+    })
+    .in('id', seanceIds)
+  if (updateError) throw updateError
+  return seanceIds.length
+}
+
 export async function insertSeanceExceptionnelle(
   planningId: string,
   uniteId: string | null,

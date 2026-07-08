@@ -3,6 +3,9 @@ import { useMatieres } from '../hooks/useMatieres'
 import { useChapitres } from '../hooks/useChapitres'
 import { useUnites } from '../hooks/useUnites'
 import { useRessources } from '../hooks/useRessources'
+import { useAnneesScolaires } from '../hooks/useAnneesScolaires'
+import { useClasses } from '../hooks/useClasses'
+import { useInstancesUnite } from '../hooks/useInstancesUnite'
 import Modal from '../components/Modal'
 import type { Unite } from '../types/unite'
 import type { TypeRessource } from '../types/ressource'
@@ -67,6 +70,19 @@ function UnitesDeCours() {
     reorder: reordonnerRessources,
   } = useRessources(uniteSelectionneeId)
 
+  const { annees } = useAnneesScolaires()
+  const anneeActive = annees.find((a) => a.active) ?? null
+  const { classes } = useClasses()
+  const {
+    instances,
+    loading: instancesLoading,
+    error: erreurInstances,
+    pousser,
+  } = useInstancesUnite(uniteSelectionneeId, anneeActive?.id ?? null)
+  const [classesCochees, setClassesCochees] = useState<Set<string>>(new Set())
+  const [pushEnCours, setPushEnCours] = useState(false)
+  const [messagePush, setMessagePush] = useState<string | null>(null)
+
   // Regroupement en lecture seule pour l'affichage : matière → chapitres (avec
   // leurs unités dans l'ordre de la trame par défaut) → unités sans chapitre.
   // Les chapitres eux-mêmes ne sont ni créés ni édités ici (onglet Chapitres).
@@ -122,6 +138,54 @@ function UnitesDeCours() {
       setUniteSelectionneeId(null)
     }
   }, [uniteSelectionneeId, unites])
+
+  useEffect(() => {
+    setClassesCochees(new Set())
+    setMessagePush(null)
+  }, [uniteSelectionneeId])
+
+  const classesParId = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes])
+
+  const classesInstances = useMemo(() => {
+    const parClasse = new Map<string, { nbSeances: number; aOverride: boolean }>()
+    for (const instance of instances) {
+      const entree = parClasse.get(instance.classeId) ?? { nbSeances: 0, aOverride: false }
+      entree.nbSeances += 1
+      entree.aOverride = entree.aOverride || instance.aOverride
+      parClasse.set(instance.classeId, entree)
+    }
+    return [...parClasse.entries()]
+      .map(([classeId, info]) => ({ classe: classesParId.get(classeId), classeId, ...info }))
+      .sort((a, b) => (a.classe?.nom ?? '').localeCompare(b.classe?.nom ?? ''))
+  }, [instances, classesParId])
+
+  function toggleClasseCochee(classeId: string) {
+    setClassesCochees((prev) => {
+      const next = new Set(prev)
+      if (next.has(classeId)) next.delete(classeId)
+      else next.add(classeId)
+      return next
+    })
+  }
+
+  function toggleToutesClasses() {
+    setClassesCochees((prev) =>
+      prev.size === classesInstances.length ? new Set() : new Set(classesInstances.map((c) => c.classeId)),
+    )
+  }
+
+  async function handlePousser(classeIds: string[]) {
+    if (classeIds.length === 0) return
+    setPushEnCours(true)
+    setMessagePush(null)
+    try {
+      const nb = await pousser(classeIds)
+      setMessagePush(nb > 0 ? `${nb} séance(s) resynchronisée(s) avec le template.` : 'Rien à pousser — déjà synchronisé.')
+      setClassesCochees(new Set())
+    } finally {
+      setPushEnCours(false)
+    }
+  }
 
   function toggleMatiere(id: string) {
     setMatieresRepliees((prev) => {
@@ -563,10 +627,78 @@ function UnitesDeCours() {
                   </div>
                 </>
               ) : (
-                <p className="section-desc">
-                  Aucune instance pour le moment — le moteur de projection (planning annuel) n'est
-                  pas encore construit. Cette unité n'est utilisée dans aucun planning de classe.
-                </p>
+                <div className="udc-instances">
+                  <p className="section-desc">
+                    Classes utilisant cette unité dans leur planning de l'année active. Pousser
+                    resynchronise le titre, l'instruction élèves et les délais de préparation avec le
+                    template — sans jamais toucher aux dates, heures ou statuts des séances déjà
+                    programmées.
+                  </p>
+
+                  {erreurInstances && <p className="error-text">{erreurInstances}</p>}
+
+                  {!anneeActive ? (
+                    <p className="section-desc">Aucune année scolaire active.</p>
+                  ) : (
+                    !instancesLoading &&
+                    (classesInstances.length === 0 ? (
+                      <p className="section-desc">
+                        Cette unité n'est utilisée dans aucun planning de classe cette année.
+                      </p>
+                    ) : (
+                      <>
+                        <label className="modal-field-inline">
+                          <input
+                            type="checkbox"
+                            checked={classesCochees.size === classesInstances.length}
+                            onChange={toggleToutesClasses}
+                          />
+                          Tout sélectionner
+                        </label>
+
+                        <ul className="udc-instances-liste">
+                          {classesInstances.map(({ classe, classeId, nbSeances, aOverride }) => (
+                            <li key={classeId} className="udc-instance-item">
+                              <label className="modal-field-inline">
+                                <input
+                                  type="checkbox"
+                                  checked={classesCochees.has(classeId)}
+                                  onChange={() => toggleClasseCochee(classeId)}
+                                />
+                                {classe?.nom ?? '?'}
+                              </label>
+                              <span className="udc-instance-info">
+                                {nbSeances} séance(s){aOverride ? ' · modifiée(s) localement' : ''}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn-sm"
+                                disabled={pushEnCours}
+                                onClick={() => handlePousser([classeId])}
+                              >
+                                Pousser
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <div className="modal-actions">
+                          <div style={{ flex: 1 }} />
+                          <button
+                            type="button"
+                            className="btn-sm btn-primary"
+                            disabled={pushEnCours || classesCochees.size === 0}
+                            onClick={() => handlePousser([...classesCochees])}
+                          >
+                            Pousser vers la sélection ({classesCochees.size})
+                          </button>
+                        </div>
+
+                        {messagePush && <p className="section-desc">{messagePush}</p>}
+                      </>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           ) : (
