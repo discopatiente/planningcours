@@ -3,9 +3,12 @@ import type { SeanceAvecPlanning, StatutSeance } from '../types/seance'
 import type { EvaluationAvecPlanning, StatutEvaluation } from '../types/evaluation'
 import { fetchSeancesSemaine, updateStatutSeance } from '../lib/seances'
 import { fetchEvaluationsSemaine, updateStatutEvaluation } from '../lib/evaluations'
+import { MARGE_ALERTES_JOURS } from '../lib/alertes'
+import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
 
 export function useSemaine(anneeScolaireId: string | null, dateDebut: string, dateFin: string) {
   const [seances, setSeances] = useState<SeanceAvecPlanning[]>([])
+  const [seancesFenetreAlertes, setSeancesFenetreAlertes] = useState<SeanceAvecPlanning[]>([])
   const [evaluations, setEvaluations] = useState<EvaluationAvecPlanning[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -13,17 +16,21 @@ export function useSemaine(anneeScolaireId: string | null, dateDebut: string, da
   const reload = useCallback(async () => {
     if (!anneeScolaireId) {
       setSeances([])
+      setSeancesFenetreAlertes([])
       setEvaluations([])
       setLoading(false)
       return
     }
     setLoading(true)
     try {
-      const [s, e] = await Promise.all([
+      const finFenetreAlertes = toISODate(ajouterJours(parseISODate(dateFin), MARGE_ALERTES_JOURS))
+      const [s, alertes, e] = await Promise.all([
         fetchSeancesSemaine(anneeScolaireId, dateDebut, dateFin),
+        fetchSeancesSemaine(anneeScolaireId, dateDebut, finFenetreAlertes),
         fetchEvaluationsSemaine(anneeScolaireId, dateDebut, dateFin),
       ])
       setSeances(s)
+      setSeancesFenetreAlertes(alertes)
       setEvaluations(e)
       setError(null)
     } catch (err) {
@@ -41,6 +48,7 @@ export function useSemaine(anneeScolaireId: string | null, dateDebut: string, da
     async (id: string, fait: boolean) => {
       const statut: StatutSeance = fait ? 'fait' : 'a_venir'
       setSeances((prev) => prev.map((s) => (s.id === id ? { ...s, statut } : s)))
+      setSeancesFenetreAlertes((prev) => prev.map((s) => (s.id === id ? { ...s, statut } : s)))
       try {
         await updateStatutSeance(id, statut)
       } catch (err) {
@@ -76,5 +84,15 @@ export function useSemaine(anneeScolaireId: string | null, dateDebut: string, da
     [reload],
   )
 
-  return { seances, evaluations, loading, error, reload, marquerSeanceFaite, marquerEvaluationFaite, annulerEvaluation }
+  return {
+    seances,
+    seancesFenetreAlertes,
+    evaluations,
+    loading,
+    error,
+    reload,
+    marquerSeanceFaite,
+    marquerEvaluationFaite,
+    annulerEvaluation,
+  }
 }

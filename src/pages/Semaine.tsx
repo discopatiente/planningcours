@@ -11,8 +11,10 @@ import { calculerSemaine, lundiDeLaSemaine } from '../lib/semaineAB'
 import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
 import { updateSeance } from '../lib/seances'
 import { annulerSeance, ajouterSeanceExceptionnelle, deplacerSeance } from '../lib/seanceActions'
+import { calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
 import SeancePanel from '../components/SeancePanel'
 import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
+import AlertesPreparation from '../components/AlertesPreparation'
 import type { Ressource } from '../types/ressource'
 import type { SeanceAvecPlanning } from '../types/seance'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
@@ -72,8 +74,17 @@ function Semaine() {
     return () => clearInterval(intervalle)
   }, [vue])
 
-  const { seances, evaluations, loading, error, reload, marquerSeanceFaite, marquerEvaluationFaite, annulerEvaluation } =
-    useSemaine(anneeActive?.id ?? null, lundi, vendredi)
+  const {
+    seances,
+    seancesFenetreAlertes,
+    evaluations,
+    loading,
+    error,
+    reload,
+    marquerSeanceFaite,
+    marquerEvaluationFaite,
+    annulerEvaluation,
+  } = useSemaine(anneeActive?.id ?? null, lundi, vendredi)
   const { plannings } = usePlannings(anneeActive?.id ?? null)
 
   const [itemSelectionne, setItemSelectionne] = useState<ItemJour | null>(null)
@@ -94,6 +105,30 @@ function Semaine() {
     }
     return map
   }, [ressources])
+
+  const alertesImpression = useMemo(
+    () =>
+      calculerAlertesImpression(seancesFenetreAlertes, unitesParId, lundi, vendredi).map((a) => ({
+        id: a.seance.id,
+        dateSeance: a.seance.date,
+        titre: a.titre,
+        classeNom: classesParId.get(a.seance.planning.classe_id)?.nom ?? '?',
+        ressourceUrl: a.seance.unite_id ? ressourcePrincipaleParUnite.get(a.seance.unite_id)?.url : undefined,
+      })),
+    [seancesFenetreAlertes, unitesParId, lundi, vendredi, classesParId, ressourcePrincipaleParUnite],
+  )
+
+  const alertesInstructions = useMemo(
+    () =>
+      calculerAlertesInstructionsEleves(seancesFenetreAlertes, unitesParId, lundi, vendredi).map((a) => ({
+        id: a.seance.id,
+        dateSeance: a.seance.date,
+        titre: a.titre,
+        classeNom: classesParId.get(a.seance.planning.classe_id)?.nom ?? '?',
+        instruction: a.instruction,
+      })),
+    [seancesFenetreAlertes, unitesParId, lundi, vendredi, classesParId],
+  )
 
   function matiereDeProgression(progressionId: string) {
     const progression = progressionsParId.get(progressionId)
@@ -238,7 +273,9 @@ function Semaine() {
       ) : (
         !loading &&
         (vue === 'liste' ? (
-          <div className="semaine-jours">
+          <div className="semaine-jours-wrapper">
+            <AlertesPreparation impressions={alertesImpression} instructions={alertesInstructions} />
+            <div className="semaine-jours">
             {jours.map((jour, index) => (
               <div className="semaine-jour" key={jour}>
                 <div className={`semaine-jour-header${jour === aujourdhui ? ' aujourdhui' : ''}`}>
@@ -290,6 +327,7 @@ function Semaine() {
                 })}
               </div>
             ))}
+            </div>
           </div>
         ) : (
           <div className="calendrier-wrapper">
