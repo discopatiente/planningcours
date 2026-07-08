@@ -1083,3 +1083,159 @@ h2 {
   pointer-events: none;
   z-index: 2;
 }
+
+.gantt-overflow-banner {
+  background: rgba(216, 90, 48, 0.12);
+  border: 1px solid #d85a30;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.gantt-overflow-banner ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.gantt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.gantt-mode-toggle,
+.gantt-zoom-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.gantt-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.gantt-header {
+  display: grid;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.gantt-corner {
+  border-right: 1px solid var(--border);
+}
+
+.gantt-axis-label {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 4px;
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gantt-body {
+  position: relative;
+}
+
+.gantt-vacances {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.16),
+    rgba(128, 128, 128, 0.16) 4px,
+    transparent 4px,
+    transparent 9px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gantt-aujourdhui-ligne {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e5484d;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.gantt-groupe-header {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.6;
+  background: var(--accent-bg);
+}
+
+.gantt-row {
+  display: grid;
+  border-bottom: 1px solid var(--border);
+  min-height: 34px;
+}
+
+.gantt-row-label {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 13px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gantt-row-timeline {
+  display: grid;
+  align-items: center;
+  position: relative;
+}
+
+.gantt-bloc {
+  height: 20px;
+  margin: 2px 1px;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 10px;
+  line-height: 20px;
+  padding: 0 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  z-index: 2;
+}
+
+.gantt-bloc-passee {
+  opacity: 0.45;
+}
+
+.gantt-point {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  justify-self: center;
+  z-index: 2;
+}
+
+.gantt-charge-bar {
+  height: 22px;
+  margin: 2px 2px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  line-height: 22px;
+  z-index: 2;
+}
