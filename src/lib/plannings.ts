@@ -24,6 +24,20 @@ export async function deletePlanning(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function fetchPlanningById(id: string): Promise<Planning> {
+  const { data, error } = await supabase.from('plannings').select('*').eq('id', id).single()
+  if (error) throw error
+  return data
+}
+
+export async function updateNbSeancesEnExces(id: string, nbSeancesEnExces: number): Promise<void> {
+  const { error } = await supabase
+    .from('plannings')
+    .update({ nb_seances_en_exces: Math.max(0, nbSeancesEnExces) })
+    .eq('id', id)
+  if (error) throw error
+}
+
 async function creerPlanning(
   classeId: string,
   progressionId: string,

@@ -6,8 +6,13 @@ import { useProgressions } from '../hooks/useProgressions'
 import { useUnites } from '../hooks/useUnites'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
+import { usePlannings } from '../hooks/usePlannings'
 import { calculerSemaine, lundiDeLaSemaine } from '../lib/semaineAB'
 import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
+import { updateSeance } from '../lib/seances'
+import { annulerSeance, ajouterSeanceExceptionnelle, deplacerSeance } from '../lib/seanceActions'
+import SeancePanel from '../components/SeancePanel'
+import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
 import type { Ressource } from '../types/ressource'
 import type { SeanceAvecPlanning } from '../types/seance'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
@@ -67,11 +72,12 @@ function Semaine() {
     return () => clearInterval(intervalle)
   }, [vue])
 
-  const { seances, evaluations, loading, error, marquerSeanceFaite, marquerEvaluationFaite } = useSemaine(
-    anneeActive?.id ?? null,
-    lundi,
-    vendredi,
-  )
+  const { seances, evaluations, loading, error, reload, marquerSeanceFaite, marquerEvaluationFaite, annulerEvaluation } =
+    useSemaine(anneeActive?.id ?? null, lundi, vendredi)
+  const { plannings } = usePlannings(anneeActive?.id ?? null)
+
+  const [itemSelectionne, setItemSelectionne] = useState<ItemJour | null>(null)
+  const [modalExceptionnelleOuvert, setModalExceptionnelleOuvert] = useState(false)
 
   const classesParId = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes])
   const progressionsParId = useMemo(() => new Map(progressions.map((p) => [p.id, p])), [progressions])
@@ -111,11 +117,15 @@ function Semaine() {
     const classe = classesParId.get(item.data.planning.classe_id)
     const matiere = matiereDeProgression(item.data.planning.progression_id)
     const estEvaluation = item.kind === 'evaluation'
+    const seanceAnnuleeSansUnite =
+      !estEvaluation && item.data.statut === 'annulee' && (item.data as SeanceAvecPlanning).unite_id === null
     const titre = estEvaluation
       ? (item.data as EvaluationAvecPlanning).titre ?? 'Évaluation'
-      : (item.data as SeanceAvecPlanning).override_titre ??
-        unitesParId.get((item.data as SeanceAvecPlanning).unite_id ?? '')?.titre ??
-        '(unité supprimée)'
+      : seanceAnnuleeSansUnite
+        ? 'Séance annulée'
+        : (item.data as SeanceAvecPlanning).override_titre ??
+          unitesParId.get((item.data as SeanceAvecPlanning).unite_id ?? '')?.titre ??
+          '(unité supprimée)'
     const ressource = !estEvaluation
       ? ressourcePrincipaleParUnite.get((item.data as SeanceAvecPlanning).unite_id ?? '')
       : undefined
@@ -125,6 +135,50 @@ function Semaine() {
   function toggleFait(item: ItemJour, fait: boolean) {
     if (item.kind === 'evaluation') marquerEvaluationFaite(item.data.id, fait)
     else marquerSeanceFaite(item.data.id, fait)
+  }
+
+  const optionsExceptionnelle = useMemo(
+    () =>
+      plannings
+        .map((planning) => {
+          const classe = classesParId.get(planning.classe_id)
+          const progression = progressionsParId.get(planning.progression_id)
+          if (!classe || !progression) return null
+          const matiere = matieresParId.get(progression.matiere_id) ?? null
+          return { planning, classe, progression, matiere }
+        })
+        .filter((o): o is NonNullable<typeof o> => o !== null),
+    [plannings, classesParId, progressionsParId, matieresParId],
+  )
+
+  async function handleAnnuler(item: ItemJour, motif: string | null) {
+    if (item.kind === 'evaluation') {
+      await annulerEvaluation(item.data.id)
+      return
+    }
+    if (!anneeActive) return
+    const seance = item.data
+    const matiere = matiereDeProgression(seance.planning.progression_id)
+    if (!matiere) return
+    await annulerSeance(seance, motif, seance.planning.classe_id, matiere.id, anneeActive)
+    await reload()
+  }
+
+  async function handleDeplacer(item: ItemJour, date: string, heureDebut: string) {
+    if (item.kind === 'evaluation') return
+    await deplacerSeance(item.data.id, date, heureDebut)
+    await reload()
+  }
+
+  async function handleEnregistrerNote(item: ItemJour, notes: string) {
+    if (item.kind === 'evaluation') return
+    await updateSeance(item.data.id, { notes_seance: notes || null })
+    await reload()
+  }
+
+  async function handleAjouterExceptionnelle(planningId: string, progressionId: string, date: string, heureDebut: string) {
+    await ajouterSeanceExceptionnelle(planningId, progressionId, date, heureDebut)
+    await reload()
   }
 
   const aujourdhuiDansLaSemaine = jours.includes(aujourdhui)
@@ -154,6 +208,11 @@ function Semaine() {
           )}
         </span>
         <div style={{ flex: 1 }} />
+        {optionsExceptionnelle.length > 0 && (
+          <button type="button" className="btn-sm" onClick={() => setModalExceptionnelleOuvert(true)}>
+            + Séance exceptionnelle
+          </button>
+        )}
         <div className="semaine-vue-toggle">
           <button
             type="button"
@@ -196,6 +255,7 @@ function Semaine() {
                     <div
                       key={item.data.id}
                       className={`semaine-item${estEvaluation ? ' semaine-item-evaluation' : ''}${passee ? ' semaine-item-passee' : ''}`}
+                      onClick={() => setItemSelectionne(item)}
                     >
                       <span className="semaine-item-heure">{formatHeure(item.heure)}</span>
                       <span className="referentiel-group-dot" style={{ background: matiere?.couleur ?? '#999' }} />
@@ -205,14 +265,23 @@ function Semaine() {
                           {classe?.nom ?? '?'} — {matiere?.nom ?? '?'}
                         </span>
                       </span>
-                      <input
-                        type="checkbox"
-                        checked={item.data.statut === 'fait'}
-                        onChange={(e) => toggleFait(item, e.target.checked)}
-                        title="Fait"
-                      />
+                      {item.data.statut !== 'annulee' && (
+                        <input
+                          type="checkbox"
+                          checked={item.data.statut === 'fait'}
+                          onChange={(e) => toggleFait(item, e.target.checked)}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Fait"
+                        />
+                      )}
                       {ressource && (
-                        <a href={ressource.url} target="_blank" rel="noreferrer" title="Ouvrir la ressource">
+                        <a
+                          href={ressource.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Ouvrir la ressource"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           ↗
                         </a>
                       )}
@@ -260,17 +329,27 @@ function Semaine() {
                               key={item.data.id}
                               className={`cg-evenement${estEvaluation ? ' semaine-item-evaluation' : ''}${passee ? ' semaine-item-passee' : ''}`}
                               style={!estEvaluation ? { borderLeftColor: matiere?.couleur ?? '#999' } : undefined}
+                              onClick={() => setItemSelectionne(item)}
                             >
                               <span className="cg-evenement-titre">{titre}</span>
                               <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
-                              <input
-                                type="checkbox"
-                                checked={item.data.statut === 'fait'}
-                                onChange={(e) => toggleFait(item, e.target.checked)}
-                                title="Fait"
-                              />
+                              {item.data.statut !== 'annulee' && (
+                                <input
+                                  type="checkbox"
+                                  checked={item.data.statut === 'fait'}
+                                  onChange={(e) => toggleFait(item, e.target.checked)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Fait"
+                                />
+                              )}
                               {ressource && (
-                                <a href={ressource.url} target="_blank" rel="noreferrer" title="Ouvrir la ressource">
+                                <a
+                                  href={ressource.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title="Ouvrir la ressource"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   ↗
                                 </a>
                               )}
@@ -288,6 +367,45 @@ function Semaine() {
             )}
           </div>
         ))
+      )}
+
+      {itemSelectionne &&
+        (() => {
+          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne)
+          const seance = itemSelectionne.kind === 'seance' ? itemSelectionne.data : null
+          return (
+            <SeancePanel
+              titre={titre}
+              classeNom={classe?.nom ?? '?'}
+              matiereNom={matiere?.nom ?? '?'}
+              matiereCouleur={matiere?.couleur ?? '#999'}
+              date={itemSelectionne.data.date}
+              heureDebut={itemSelectionne.heure}
+              fait={itemSelectionne.data.statut === 'fait'}
+              estEvaluation={estEvaluation}
+              estAnnulee={itemSelectionne.data.statut === 'annulee'}
+              motifAnnulation={seance?.motif_annulation ?? null}
+              notesSeance={seance?.notes_seance ?? null}
+              ressourceUrl={ressource?.url}
+              onToggleFait={(fait) => toggleFait(itemSelectionne, fait)}
+              onEnregistrerNote={
+                seance ? (notes) => handleEnregistrerNote(itemSelectionne, notes) : undefined
+              }
+              onDeplacer={
+                seance ? (date, heure) => handleDeplacer(itemSelectionne, date, heure) : undefined
+              }
+              onAnnuler={(motif) => handleAnnuler(itemSelectionne, motif)}
+              onClose={() => setItemSelectionne(null)}
+            />
+          )
+        })()}
+
+      {modalExceptionnelleOuvert && (
+        <SeanceExceptionnelleModal
+          options={optionsExceptionnelle}
+          onEnregistrer={handleAjouterExceptionnelle}
+          onClose={() => setModalExceptionnelleOuvert(false)}
+        />
       )}
     </div>
   )

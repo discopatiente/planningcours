@@ -62,3 +62,62 @@ export async function insertSeances(
   if (error) throw error
   return data
 }
+
+export async function updateSeance(
+  id: string,
+  changes: Partial<
+    Pick<Seance, 'date' | 'heure_debut' | 'statut' | 'motif_annulation' | 'notes_seance' | 'unite_id'>
+  >,
+): Promise<Seance> {
+  const { data, error } = await supabase.from('seances').update(changes).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteSeance(id: string): Promise<void> {
+  const { error } = await supabase.from('seances').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function insertSeanceTrouAnnule(
+  planningId: string,
+  date: string,
+  heureDebut: string,
+  motif: string | null,
+): Promise<Seance> {
+  const { data, error } = await supabase
+    .from('seances')
+    .insert({
+      planning_id: planningId,
+      unite_id: null,
+      date,
+      heure_debut: heureDebut,
+      statut: 'annulee' as const,
+      motif_annulation: motif,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function insertSeanceExceptionnelle(
+  planningId: string,
+  uniteId: string | null,
+  date: string,
+  heureDebut: string,
+): Promise<Seance> {
+  const { data, error } = await supabase
+    .from('seances')
+    .insert({
+      planning_id: planningId,
+      unite_id: uniteId,
+      date,
+      heure_debut: heureDebut,
+      statut: 'a_venir' as const,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}

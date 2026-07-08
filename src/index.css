@@ -436,6 +436,39 @@ h2 {
   border-left: 2px solid var(--accent-bg);
 }
 
+.modal-field-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-field-title {
+  font-weight: 600;
+}
+
+.modal-field-row {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-field-row input {
+  flex: 1;
+}
+
+.seance-panel-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.seance-panel-annulee {
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.75;
+}
+
 .modal-actions {
   display: flex;
   align-items: center;
@@ -841,6 +874,7 @@ h2 {
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+  cursor: pointer;
 }
 
 .semaine-item:last-child {
@@ -958,6 +992,7 @@ h2 {
   padding: 2px 4px;
   margin-bottom: 2px;
   font-size: 11px;
+  cursor: pointer;
 }
 
 .cg-evenement.semaine-item-evaluation {
