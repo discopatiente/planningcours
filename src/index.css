@@ -1270,3 +1270,63 @@ h2 {
   line-height: 22px;
   z-index: 2;
 }
+
+.export-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.export-print-titre {
+  margin-bottom: 12px;
+}
+
+.export-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.export-table th,
+.export-table td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.export-table thead {
+  background: var(--accent-bg);
+}
+
+.export-row-annulee {
+  opacity: 0.55;
+  font-style: italic;
+}
+
+@media print {
+  .sidebar,
+  .parametres-nav,
+  .no-print {
+    display: none !important;
+  }
+
+  .app-layout,
+  .parametres-layout {
+    margin: 0;
+    display: block;
+  }
+
+  .app-content,
+  .parametres-content {
+    padding: 0;
+  }
+
+  .export-table {
+    font-size: 11px;
+  }
+
+  .export-table thead {
+    background: none;
+  }
+}
