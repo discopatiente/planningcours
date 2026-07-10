@@ -1137,10 +1137,29 @@ h2 {
   flex-wrap: wrap;
 }
 
-.gantt-mode-toggle,
-.gantt-zoom-toggle {
+.gantt-mode-toggle {
   display: flex;
   gap: 4px;
+}
+
+.gantt-zoom-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gantt-zoom-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-right: 2px;
+}
+
+.gantt-zoom-niveau {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 68px;
+  text-align: center;
 }
 
 .gantt-wrapper {

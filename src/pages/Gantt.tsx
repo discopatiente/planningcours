@@ -26,6 +26,12 @@ import type { SeanceAvecPlanning } from '../types/seance'
 type Mode = 'classe' | 'matiere' | 'charge'
 type Zoom = 'annee' | 'trimestre' | 'mois'
 
+const NIVEAUX_ZOOM: { valeur: Zoom; label: string }[] = [
+  { valeur: 'annee', label: 'Année' },
+  { valeur: 'trimestre', label: 'Trimestre' },
+  { valeur: 'mois', label: 'Mois' },
+]
+
 const COULEUR_EVALUATION = '#D85A30'
 const LARGEUR_LABEL = 180
 
@@ -89,6 +95,17 @@ function Gantt() {
   const totalJours = diffJours(rangeStart, rangeEnd) + 1
 
   const indexTrimestreCourant = bornes.findIndex((b) => dateReference < b.fin)
+  const indexZoom = NIVEAUX_ZOOM.findIndex((n) => n.valeur === zoom)
+
+  function zoomerAvant() {
+    const suivant = NIVEAUX_ZOOM[indexZoom + 1]
+    if (suivant) setZoom(suivant.valeur)
+  }
+
+  function zoomerArriere() {
+    const precedent = NIVEAUX_ZOOM[indexZoom - 1]
+    if (precedent) setZoom(precedent.valeur)
+  }
 
   function allerPrecedent() {
     if (zoom === 'trimestre') {
@@ -279,14 +296,27 @@ function Gantt() {
         )}
 
         <div className="gantt-zoom-toggle">
-          <button type="button" className={`btn-sm${zoom === 'annee' ? ' btn-primary' : ''}`} onClick={() => setZoom('annee')}>
-            Année
+          <span className="gantt-zoom-label">Zoom</span>
+          <button
+            type="button"
+            className="btn-sm"
+            onClick={zoomerArriere}
+            disabled={indexZoom === 0}
+            title="Zoom arrière (vue plus large)"
+            aria-label="Zoom arrière"
+          >
+            −
           </button>
-          <button type="button" className={`btn-sm${zoom === 'trimestre' ? ' btn-primary' : ''}`} onClick={() => setZoom('trimestre')}>
-            Trimestre
-          </button>
-          <button type="button" className={`btn-sm${zoom === 'mois' ? ' btn-primary' : ''}`} onClick={() => setZoom('mois')}>
-            Mois
+          <span className="gantt-zoom-niveau">{NIVEAUX_ZOOM[indexZoom].label}</span>
+          <button
+            type="button"
+            className="btn-sm"
+            onClick={zoomerAvant}
+            disabled={indexZoom === NIVEAUX_ZOOM.length - 1}
+            title="Zoom avant (vue plus détaillée)"
+            aria-label="Zoom avant"
+          >
+            +
           </button>
         </div>
       </div>
