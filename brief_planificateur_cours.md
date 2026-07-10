@@ -262,6 +262,21 @@ Navigation secondaire à gauche avec les sections :
 - Export du planning annuel en PDF imprimable.
 - Export en CSV/Excel.
 
+### 6. Expérience mobile
+
+Sur mobile, l'application sert à consulter rapidement (quels cours aujourd'hui, qu'est-ce qui suit, qu'est-ce qu'il faut préparer), pas à éditer. La construction des progressions, des unités et le paramétrage de l'emploi du temps restent des tâches d'ordinateur : elles restent accessibles sur mobile via du responsive classique (réagencement des colonnes en pile), sans refonte de leur interface d'édition. Une seule vue est spécifiquement pensée pour le mobile.
+
+**Vue du jour** — écran d'accueil quand l'application est ouverte sur mobile.
+- En-tête : jour et date en grand.
+- Pastilles d'alerte du jour (nombre de documents à imprimer/distribuer, nombre d'instructions élèves à transmettre).
+- Liste verticale des cours du jour, dans l'ordre chronologique : heure, couleur de matière, titre, classe/matière, lien vers le document.
+- Alertes spécifiques à un cours affichées sous le cours concerné.
+- Évaluations en fond coloré distinctif ; séances faites barrées et estompées.
+- Navigation hier / aujourd'hui / demain.
+- Actions : marquer fait, ouvrir le document, cocher un document comme imprimé ou distribué (rejoint le système d'alertes de préparation).
+
+**Navigation mobile** — la sidebar est remplacée par une barre d'onglets en bas de l'écran : Jour, Semaine (sous-vue liste, qui fonctionne bien empilée verticalement), Alertes (pointe vers Impressions, qui couvre aussi les instructions élèves à transmettre), Référentiel (pointe vers Unités de cours). Le Gantt et les paramètres restent atteignables mais ne sont pas mis en avant sur mobile.
+
 ---
 
 ## Règles UX importantes

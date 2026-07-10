@@ -1,6 +1,14 @@
 import { supabase } from './supabaseClient'
 import type { Ressource, TypeRessource } from '../types/ressource'
 
+export const LIBELLES_TYPE_RESSOURCE: Record<TypeRessource, string> = {
+  support: 'Support de cours',
+  video: 'Vidéo',
+  exercice: 'Exercice',
+  devoir_possible: 'Devoir possible',
+  lien_utile: 'Lien utile',
+}
+
 export async function fetchRessources(uniteId: string): Promise<Ressource[]> {
   const { data, error } = await supabase
     .from('ressources')

@@ -7,16 +7,11 @@ import { useUnites } from '../hooks/useUnites'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
 import { useImpressions } from '../hooks/useImpressions'
-import { TYPES_RESSOURCES_IMPRIMABLES } from '../lib/impressions'
+import { calculerAlertesInstructionsEleves } from '../lib/alertes'
+import { toISODate } from '../lib/dates'
+import { construireRessourcesImprimablesParUnite } from '../lib/impressions'
+import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
 import type { TypeRessource } from '../types/ressource'
-
-const LIBELLES_TYPE_RESSOURCE: Record<TypeRessource, string> = {
-  support: 'Support de cours',
-  video: 'Vidéo',
-  exercice: 'Exercice',
-  devoir_possible: 'Devoir possible',
-  lien_utile: 'Lien utile',
-}
 
 function formatDateCourte(dateStr: string) {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString('fr-FR', {
@@ -61,16 +56,7 @@ function Impressions() {
   const matieresParId = useMemo(() => new Map(matieres.map((m) => [m.id, m])), [matieres])
   const unitesParId = useMemo(() => new Map(unites.map((u) => [u.id, u])), [unites])
 
-  const ressourcesImprimablesParUnite = useMemo(() => {
-    const map = new Map<string, typeof ressources>()
-    for (const r of ressources) {
-      if (!TYPES_RESSOURCES_IMPRIMABLES.includes(r.type)) continue
-      const liste = map.get(r.unite_id) ?? []
-      liste.push(r)
-      map.set(r.unite_id, liste)
-    }
-    return map
-  }, [ressources])
+  const ressourcesImprimablesParUnite = useMemo(() => construireRessourcesImprimablesParUnite(ressources), [ressources])
 
   const lignes = useMemo(() => {
     const resultat: LigneImpression[] = []
@@ -104,6 +90,22 @@ function Impressions() {
     if (afficherHistorique) return lignes
     return lignes.filter((l) => !getEtat(l.seanceId, l.ressourceId).distribue)
   }, [lignes, afficherHistorique, getEtat])
+
+  // Bornes = aujourd'hui -> fin d'année : ces alertes n'ont pas d'état
+  // persistant (contrairement à imprimé/distribué), donc une échéance
+  // passée sort naturellement de la liste plutôt que d'être cochée.
+  const alertesInstructions = useMemo(() => {
+    if (!anneeActive) return []
+    return calculerAlertesInstructionsEleves(seances, unitesParId, toISODate(new Date()), anneeActive.date_fin).map(
+      (a) => ({
+        id: a.seance.id,
+        dateEcheance: a.dateEcheance,
+        titre: a.titre,
+        classeNom: classesParId.get(a.seance.planning.classe_id)?.nom ?? '?',
+        instruction: a.instruction,
+      }),
+    )
+  }, [seances, unitesParId, anneeActive, classesParId])
 
   const loading = loadingSeances || loadingEtats
 
@@ -163,6 +165,24 @@ function Impressions() {
             )
           })}
         </div>
+      )}
+
+      {anneeActive && alertesInstructions.length > 0 && (
+        <>
+          <h3 className="section-title" style={{ fontSize: 15, marginTop: 24 }}>
+            Instructions élèves à transmettre
+          </h3>
+          <div className="card">
+            {alertesInstructions.map((a) => (
+              <div className="card-row" key={a.id}>
+                <span className="alertes-item-date">{formatDateCourte(a.dateEcheance)}</span>
+                <span className="card-row-label">
+                  {a.titre} — {a.classeNom} : {a.instruction}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

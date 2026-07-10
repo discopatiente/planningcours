@@ -17,14 +17,13 @@ import { updateSeance } from '../lib/seances'
 import { annulerSeance, ajouterSeanceExceptionnelle, deplacerSeance } from '../lib/seanceActions'
 import { reporterEvaluation } from '../lib/evaluationActions'
 import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
-import { TYPES_RESSOURCES_IMPRIMABLES } from '../lib/impressions'
+import { construireRessourcesImprimablesParUnite } from '../lib/impressions'
 import { construirePresences, rattrapagesPourSeance, seancesAvecRattrapage } from '../lib/absences'
+import { construireRessourcePrincipaleParUnite, detailsItem, formatHeure, matiereDeProgression } from '../lib/semaineItems'
+import type { ItemJour } from '../lib/semaineItems'
 import SeancePanel from '../components/SeancePanel'
 import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
 import AlertesPreparation from '../components/AlertesPreparation'
-import type { Ressource } from '../types/ressource'
-import type { SeanceAvecPlanning } from '../types/seance'
-import type { EvaluationAvecPlanning } from '../types/evaluation'
 
 const NOMS_JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 
@@ -34,10 +33,6 @@ const NOMS_JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 const HEURES_GRILLE = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 const HAUTEUR_LIGNE = 56
 const HAUTEUR_ENTETE = 32
-
-type ItemJour =
-  | { kind: 'seance'; heure: string; data: SeanceAvecPlanning }
-  | { kind: 'evaluation'; heure: string; data: EvaluationAvecPlanning }
 
 function formatJour(dateStr: string) {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -49,10 +44,6 @@ function formatPlageSemaine(lundi: string, vendredi: string) {
   const debut = d1.toLocaleDateString('fr-FR', { day: 'numeric', month: d1.getMonth() === d2.getMonth() ? undefined : 'long' })
   const fin = d2.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
   return `${debut} – ${fin}`
-}
-
-function formatHeure(heure: string) {
-  return heure.slice(0, 5)
 }
 
 function Semaine() {
@@ -110,27 +101,14 @@ function Semaine() {
   const matieresParId = useMemo(() => new Map(matieres.map((m) => [m.id, m])), [matieres])
   const unitesParId = useMemo(() => new Map(unites.map((u) => [u.id, u])), [unites])
 
-  const ressourcePrincipaleParUnite = useMemo(() => {
-    const map = new Map<string, Ressource>()
-    for (const r of ressources) {
-      const existante = map.get(r.unite_id)
-      if (!existante || (existante.type !== 'support' && r.type === 'support')) {
-        map.set(r.unite_id, r)
-      }
-    }
-    return map
-  }, [ressources])
+  const ressourcePrincipaleParUnite = useMemo(() => construireRessourcePrincipaleParUnite(ressources), [ressources])
 
-  const ressourcesImprimablesParUnite = useMemo(() => {
-    const map = new Map<string, Ressource[]>()
-    for (const r of ressources) {
-      if (!TYPES_RESSOURCES_IMPRIMABLES.includes(r.type)) continue
-      const liste = map.get(r.unite_id) ?? []
-      liste.push(r)
-      map.set(r.unite_id, liste)
-    }
-    return map
-  }, [ressources])
+  const ctxItems = useMemo(
+    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, ressourcePrincipaleParUnite }),
+    [classesParId, progressionsParId, matieresParId, unitesParId, ressourcePrincipaleParUnite],
+  )
+
+  const ressourcesImprimablesParUnite = useMemo(() => construireRessourcesImprimablesParUnite(ressources), [ressources])
 
   const alertesImpression = useMemo(
     () =>
@@ -192,11 +170,6 @@ function Semaine() {
     [seancesFenetreAlertes, unitesParId, lundi, vendredi, classesParId],
   )
 
-  function matiereDeProgression(progressionId: string) {
-    const progression = progressionsParId.get(progressionId)
-    return progression ? matieresParId.get(progression.matiere_id) ?? null : null
-  }
-
   const itemsParJour = useMemo(() => {
     const map = new Map<string, ItemJour[]>()
     for (const jour of jours) map.set(jour, [])
@@ -209,25 +182,6 @@ function Semaine() {
     for (const items of map.values()) items.sort((a, b) => a.heure.localeCompare(b.heure))
     return map
   }, [jours, seances, evaluations])
-
-  function detailsItem(item: ItemJour) {
-    const classe = classesParId.get(item.data.planning.classe_id)
-    const matiere = matiereDeProgression(item.data.planning.progression_id)
-    const estEvaluation = item.kind === 'evaluation'
-    const seanceAnnuleeSansUnite =
-      !estEvaluation && item.data.statut === 'annulee' && (item.data as SeanceAvecPlanning).unite_id === null
-    const titre = estEvaluation
-      ? (item.data as EvaluationAvecPlanning).titre ?? 'Évaluation'
-      : seanceAnnuleeSansUnite
-        ? 'Séance annulée'
-        : (item.data as SeanceAvecPlanning).override_titre ??
-          unitesParId.get((item.data as SeanceAvecPlanning).unite_id ?? '')?.titre ??
-          '(unité supprimée)'
-    const ressource = !estEvaluation
-      ? ressourcePrincipaleParUnite.get((item.data as SeanceAvecPlanning).unite_id ?? '')
-      : undefined
-    return { classe, matiere, estEvaluation, titre, ressource }
-  }
 
   function toggleFait(item: ItemJour, fait: boolean) {
     if (item.kind === 'evaluation') marquerEvaluationFaite(item.data.id, fait)
@@ -253,7 +207,7 @@ function Semaine() {
     if (item.kind === 'evaluation') {
       if (!parametres) return
       const evaluation = item.data
-      const matiere = matiereDeProgression(evaluation.planning.progression_id)
+      const matiere = matiereDeProgression(evaluation.planning.progression_id, ctxItems)
       if (!matiere) return
       await reporterEvaluation(
         evaluation,
@@ -267,7 +221,7 @@ function Semaine() {
       return
     }
     const seance = item.data
-    const matiere = matiereDeProgression(seance.planning.progression_id)
+    const matiere = matiereDeProgression(seance.planning.progression_id, ctxItems)
     if (!matiere) return
     await annulerSeance(seance, motif, seance.planning.classe_id, matiere.id, anneeActive)
     await reload()
@@ -371,7 +325,7 @@ function Semaine() {
                 {itemsParJour.get(jour)?.length === 0 && <p className="semaine-jour-vide">Aucun cours</p>}
 
                 {itemsParJour.get(jour)?.map((item) => {
-                  const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item)
+                  const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems)
                   const passee = jour < aujourdhui
 
                   return (
@@ -452,7 +406,7 @@ function Semaine() {
                     return (
                       <div className={`cg-cell${jourVide ? ' cg-cell-vide' : ''}`} key={`${jour}-${heure}`}>
                         {items.map((item) => {
-                          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item)
+                          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems)
                           return (
                             <div
                               key={item.data.id}
@@ -505,7 +459,7 @@ function Semaine() {
 
       {itemSelectionne &&
         (() => {
-          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne)
+          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne, ctxItems)
           const seance = itemSelectionne.kind === 'seance' ? itemSelectionne.data : null
           const classeId = itemSelectionne.data.planning.classe_id
           const classeEleves = tousEleves.filter((e) => e.classe_id === classeId)

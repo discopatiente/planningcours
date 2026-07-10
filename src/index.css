@@ -101,6 +101,12 @@ h2 {
   background: var(--accent-bg);
 }
 
+/* Barre d'onglets mobile : cachée par défaut, activée dans la media query
+   responsive tout en bas du fichier (avec .sidebar cachée en contrepartie). */
+.tabbar-mobile {
+  display: none;
+}
+
 .login-screen {
   min-height: 100svh;
   display: flex;
@@ -1018,6 +1024,82 @@ h2 {
   gap: 4px;
 }
 
+/* Vue du jour (mobile) */
+
+.jour-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.jour-date {
+  font-size: 22px;
+  text-transform: capitalize;
+}
+
+.jour-pastilles {
+  display: flex;
+  gap: 14px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.jour-liste {
+  display: flex;
+  flex-direction: column;
+}
+
+.jour-item-wrapper {
+  border-bottom: 1px solid var(--border);
+}
+
+.jour-item-wrapper .semaine-item {
+  border-bottom: none;
+  cursor: default;
+}
+
+.jour-item-fait {
+  opacity: 0.5;
+}
+
+.jour-item-fait .semaine-item-titre {
+  text-decoration: line-through;
+}
+
+.jour-alerte-inline {
+  margin: 0 10px 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.jour-impression-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 10px 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--accent-bg);
+  font-size: 12px;
+}
+
+.jour-nav {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
 /* Sous-vue Calendrier */
 
 .calendrier-wrapper {
@@ -1357,5 +1439,105 @@ h2 {
 
   .export-table thead {
     background: none;
+  }
+}
+
+/* Responsive mobile — consultation, pas édition (cf. note_mise_a_jour_mobile.md).
+   Réagencement CSS classique des vues existantes ; seule la vue du jour
+   (Jour.tsx) est pensée spécifiquement pour ce format. */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .tabbar-mobile {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 56px;
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border);
+    z-index: 10;
+  }
+
+  .tabbar-mobile a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .tabbar-mobile a.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .app-content {
+    padding: 16px 16px 72px;
+  }
+
+  /* Vue Semaine liste : un jour par colonne devient illisible sous 768px,
+     on les empile verticalement — c'est ce qui rend cette sous-vue
+     réellement utilisable sur mobile. */
+  .semaine-jours {
+    grid-template-columns: 1fr;
+  }
+
+  /* Paramètres a sa propre mini-sidebar (200px) imbriquée dans le contenu :
+     même traitement que la sidebar principale, mais en rangée horizontale
+     scrollable plutôt que cachée (ce sont des réglages, pas un onglet mobile
+     dédié). */
+  .parametres-layout {
+    flex-direction: column;
+    margin: -16px -16px 0;
+  }
+
+  .parametres-nav {
+    width: 100%;
+    min-height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Référentiel (Chapitres, Unités de cours) et Progressions : liste +
+     détail côte à côte n'a pas la place de respirer sous 768px — on les
+     empile, dégradation acceptée (pas de refonte de ces pages complexes). */
+  .referentiel-layout,
+  .progressions-layout {
+    flex-direction: column;
+  }
+
+  .referentiel-list,
+  .progressions-list {
+    width: 100%;
+  }
+
+  /* Grilles Emploi du temps / Calendrier : 5 colonnes de jour ne tiennent
+     pas à 375px sans devenir illisibles — largeur fixe + défilement
+     horizontal plutôt qu'une refonte de la grille, même stratégie déjà en
+     place pour le Gantt. */
+  .emploi-grid {
+    grid-template-columns: 60px repeat(5, 140px);
+    overflow-x: auto;
+  }
+
+  .calendrier-grille {
+    grid-template-columns: 56px repeat(5, 140px);
+    overflow-x: auto;
+  }
+
+  /* Filet de sécurité générique contre les débordements horizontaux des
+     lignes à plusieurs éléments inline. */
+  .card-row,
+  .modal-field-row {
+    flex-wrap: wrap;
   }
 }

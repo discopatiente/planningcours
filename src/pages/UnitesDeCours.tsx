@@ -7,16 +7,9 @@ import { useAnneesScolaires } from '../hooks/useAnneesScolaires'
 import { useClasses } from '../hooks/useClasses'
 import { useInstancesUnite } from '../hooks/useInstancesUnite'
 import Modal from '../components/Modal'
+import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
 import type { Unite } from '../types/unite'
 import type { TypeRessource } from '../types/ressource'
-
-const LIBELLES_TYPE_RESSOURCE: Record<TypeRessource, string> = {
-  support: 'Support de cours',
-  video: 'Vidéo',
-  exercice: 'Exercice',
-  devoir_possible: 'Devoir possible',
-  lien_utile: 'Lien utile',
-}
 
 function parseJours(value: string): number | null {
   if (value.trim() === '') return null

@@ -66,6 +66,7 @@ Suis cet ordre et ne passe à l'étape suivante que quand la précédente est te
 14. Vue Gantt avec zoom (3 niveaux : année, trimestre, mois)
 15. Push template vers instances
 16. Export PDF et CSV
+17. Expérience mobile — vue du jour (écran d'accueil mobile), barre d'onglets en bas, passe responsive sur les vues existantes
 
 ## Ce qu'il ne faut pas faire
 
@@ -86,3 +87,5 @@ L'académie est paramétrable par l'utilisateur dans les paramètres. Prévoir u
 ## Design
 
 Le code couleur par matière est défini par l'utilisateur dans les paramètres (section Matières). Il doit être cohérent dans toutes les vues. Les séances passées sont toujours affichées en opacité réduite (0.45). Les évaluations ont un fond coloré distinctif dans la vue semaine et apparaissent comme des points colorés (#D85A30) dans le Gantt.
+
+Sur mobile, l'application sert à la consultation, pas à l'édition (voir étape 17) : seule la vue du jour est pensée spécifiquement pour ce format, le reste passe en responsive classique sans refonte. Pas de Tailwind dans ce projet — le responsive s'implémente avec des media queries CSS classiques dans `src/index.css`, cohérent avec le reste des styles.
