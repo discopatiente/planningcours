@@ -9,6 +9,7 @@ import Gantt from './pages/Gantt'
 import Chapitres from './pages/Chapitres'
 import UnitesDeCours from './pages/UnitesDeCours'
 import Progressions from './pages/Progressions'
+import Eleves from './pages/Eleves'
 import Parametres from './pages/Parametres'
 import EmploiDuTemps from './pages/parametres/EmploiDuTemps'
 import Calendrier from './pages/parametres/Calendrier'
@@ -39,6 +40,7 @@ function AppRoutes() {
           <Route path="/chapitres" element={<Chapitres />} />
           <Route path="/unites-de-cours" element={<UnitesDeCours />} />
           <Route path="/progressions" element={<Progressions />} />
+          <Route path="/eleves" element={<Eleves />} />
           <Route path="/parametres" element={<Parametres />}>
             <Route index element={<Navigate to="/parametres/matieres" replace />} />
             <Route path="emploi-du-temps" element={<EmploiDuTemps />} />

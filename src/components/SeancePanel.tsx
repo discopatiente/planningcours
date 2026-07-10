@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from './Modal'
+import type { PresenceEleve, RattrapageDisponible } from '../lib/absences'
 
 interface SeancePanelProps {
   titre: string
@@ -14,10 +15,14 @@ interface SeancePanelProps {
   motifAnnulation: string | null
   notesSeance: string | null
   ressourceUrl?: string
+  presences?: PresenceEleve[]
+  rattrapagesDisponibles?: RattrapageDisponible[]
   onToggleFait: (fait: boolean) => void
   onEnregistrerNote?: (notes: string) => Promise<void>
   onDeplacer?: (date: string, heureDebut: string) => Promise<void>
   onAnnuler: (motif: string | null) => Promise<void>
+  onEnregistrerPresences?: (eleveIdsAbsents: string[]) => Promise<void>
+  onEnregistrerRattrapages?: (absenceIds: string[]) => Promise<void>
   onClose: () => void
 }
 
@@ -42,10 +47,14 @@ function SeancePanel({
   motifAnnulation,
   notesSeance,
   ressourceUrl,
+  presences,
+  rattrapagesDisponibles,
   onToggleFait,
   onEnregistrerNote,
   onDeplacer,
   onAnnuler,
+  onEnregistrerPresences,
+  onEnregistrerRattrapages,
   onClose,
 }: SeancePanelProps) {
   const [notes, setNotes] = useState(notesSeance ?? '')
@@ -55,6 +64,14 @@ function SeancePanel({
   const [deplacing, setDeplacing] = useState(false)
   const [motif, setMotif] = useState('')
   const [annulation, setAnnulation] = useState(false)
+  const [presentsCoches, setPresentsCoches] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries((presences ?? []).map((p) => [p.eleveId, !p.absent])),
+  )
+  const [savingPresences, setSavingPresences] = useState(false)
+  const [rattrapagesCoches, setRattrapagesCoches] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries((rattrapagesDisponibles ?? []).map((r) => [r.absenceId, true])),
+  )
+  const [savingRattrapages, setSavingRattrapages] = useState(false)
 
   return (
     <Modal title={titre} onClose={onClose}>
@@ -78,6 +95,85 @@ function SeancePanel({
             <a href={ressourceUrl} target="_blank" rel="noreferrer" className="modal-field-hint">
               ↗ Ouvrir la ressource
             </a>
+          )}
+
+          {estEvaluation && presences && presences.length > 0 && onEnregistrerPresences && (
+            <div className="modal-field-group">
+              <span className="modal-field-title">Présence</span>
+              {presences.map((p) => (
+                <label
+                  key={p.eleveId}
+                  className={`modal-field-inline${p.verrouille ? ' modal-field-disabled' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={presentsCoches[p.eleveId] ?? true}
+                    disabled={p.verrouille}
+                    onChange={(e) => setPresentsCoches((prev) => ({ ...prev, [p.eleveId]: e.target.checked }))}
+                  />
+                  {p.nomComplet}
+                  {p.verrouille && <span className="modal-field-hint"> — rattrapage déjà prévu</span>}
+                </label>
+              ))}
+              <button
+                type="button"
+                className="btn-sm"
+                disabled={savingPresences}
+                onClick={async () => {
+                  setSavingPresences(true)
+                  try {
+                    const absents = presences
+                      .filter((p) => !p.verrouille && !(presentsCoches[p.eleveId] ?? true))
+                      .map((p) => p.eleveId)
+                    await onEnregistrerPresences(absents)
+                  } finally {
+                    setSavingPresences(false)
+                  }
+                }}
+              >
+                Enregistrer la présence
+              </button>
+              <span className="modal-field-hint">
+                Les élèves décochés sont comptabilisés pour un rattrapage futur.
+              </span>
+            </div>
+          )}
+
+          {!estEvaluation && rattrapagesDisponibles && rattrapagesDisponibles.length > 0 && onEnregistrerRattrapages && (
+            <div className="modal-field-group">
+              <span className="modal-field-title">Rattrapage de devoir</span>
+              {rattrapagesDisponibles.map((r) => (
+                <label key={r.absenceId} className="modal-field-inline">
+                  <input
+                    type="checkbox"
+                    checked={rattrapagesCoches[r.absenceId] ?? true}
+                    onChange={(e) => setRattrapagesCoches((prev) => ({ ...prev, [r.absenceId]: e.target.checked }))}
+                  />
+                  {r.nomComplet} — {r.libelle}
+                </label>
+              ))}
+              <button
+                type="button"
+                className="btn-sm"
+                disabled={savingRattrapages}
+                onClick={async () => {
+                  setSavingRattrapages(true)
+                  try {
+                    const retenus = rattrapagesDisponibles
+                      .filter((r) => rattrapagesCoches[r.absenceId] ?? true)
+                      .map((r) => r.absenceId)
+                    await onEnregistrerRattrapages(retenus)
+                  } finally {
+                    setSavingRattrapages(false)
+                  }
+                }}
+              >
+                Enregistrer le rattrapage
+              </button>
+              <span className="modal-field-hint">
+                Décoche les élèves qui ne rattraperont pas leur devoir pendant ce cours.
+              </span>
+            </div>
           )}
 
           {!estEvaluation && onEnregistrerNote && (

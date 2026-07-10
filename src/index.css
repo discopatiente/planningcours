@@ -442,6 +442,10 @@ h2 {
   gap: 8px;
 }
 
+.modal-field-disabled {
+  opacity: 0.6;
+}
+
 .modal-field-title {
   font-weight: 600;
 }
@@ -1001,6 +1005,12 @@ h2 {
   flex-shrink: 0;
   color: var(--accent);
   text-decoration: none;
+}
+
+.badge-rattrapage {
+  flex-shrink: 0;
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 .semaine-vue-toggle {

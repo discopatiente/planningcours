@@ -33,6 +33,19 @@ export async function fetchEvaluationsPlanning(planningId: string): Promise<Eval
   return data
 }
 
+// Toutes les évaluations de l'année (toutes classes confondues), sans borne
+// de dates — nécessaire pour retrouver le libellé d'un devoir manqué même
+// s'il est en dehors de la semaine actuellement affichée dans la vue
+// Semaine (cf. rattrapages, TODO points 5+6).
+export async function fetchEvaluationsAnneeAvecPlanning(anneeScolaireId: string): Promise<EvaluationAvecPlanning[]> {
+  const { data, error } = await supabase
+    .from('evaluations')
+    .select('*, planning:plannings!inner(classe_id, progression_id, annee_scolaire_id)')
+    .eq('planning.annee_scolaire_id', anneeScolaireId)
+  if (error) throw error
+  return data
+}
+
 // Toutes les évaluations d'une semaine (toutes classes de l'année
 // confondues), pour la vue Semaine.
 export async function fetchEvaluationsSemaine(

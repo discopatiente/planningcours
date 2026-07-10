@@ -9,6 +9,8 @@ import { useSemaine } from '../hooks/useSemaine'
 import { usePlannings } from '../hooks/usePlannings'
 import { useParametres } from '../hooks/useParametres'
 import { useImpressions } from '../hooks/useImpressions'
+import { useTousEleves } from '../hooks/useTousEleves'
+import { useAbsences } from '../hooks/useAbsences'
 import { calculerSemaine, lundiDeLaSemaine } from '../lib/semaineAB'
 import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
 import { updateSeance } from '../lib/seances'
@@ -16,6 +18,7 @@ import { annulerSeance, ajouterSeanceExceptionnelle, deplacerSeance } from '../l
 import { reporterEvaluation } from '../lib/evaluationActions'
 import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
 import { TYPES_RESSOURCES_IMPRIMABLES } from '../lib/impressions'
+import { construirePresences, rattrapagesPourSeance, seancesAvecRattrapage } from '../lib/absences'
 import SeancePanel from '../components/SeancePanel'
 import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
 import AlertesPreparation from '../components/AlertesPreparation'
@@ -62,6 +65,13 @@ function Semaine() {
   const { ressources } = useRessourcesToutes()
   const { parametres } = useParametres()
   const { etats: etatsImpressions } = useImpressions()
+  const { eleves: tousEleves } = useTousEleves()
+  const {
+    absences,
+    evaluations: evaluationsAnnee,
+    definirPresences,
+    definirRattrapages,
+  } = useAbsences(anneeActive?.id ?? null)
 
   const [vue, setVue] = useState<'liste' | 'calendrier'>('liste')
   const [dateReference, setDateReference] = useState(() => toISODate(new Date()))
@@ -167,6 +177,8 @@ function Semaine() {
       })),
     [seances, unitesParId, ressourcesImprimablesParUnite, etatsImpressions, lundi, vendredi, classesParId],
   )
+
+  const seancesAvecRattrapageSet = useMemo(() => seancesAvecRattrapage(absences), [absences])
 
   const alertesInstructions = useMemo(
     () =>
@@ -276,6 +288,14 @@ function Semaine() {
   async function handleAjouterExceptionnelle(planningId: string, progressionId: string, date: string, heureDebut: string) {
     await ajouterSeanceExceptionnelle(planningId, progressionId, date, heureDebut)
     await reload()
+  }
+
+  async function handleEnregistrerPresences(evaluationId: string, eleveIdsAbsents: string[]) {
+    await definirPresences(evaluationId, eleveIdsAbsents)
+  }
+
+  async function handleEnregistrerRattrapages(seanceId: string, absenceIds: string[]) {
+    await definirRattrapages(seanceId, absenceIds)
   }
 
   const aujourdhuiDansLaSemaine = jours.includes(aujourdhui)
@@ -388,6 +408,11 @@ function Semaine() {
                           ↗
                         </a>
                       )}
+                      {!estEvaluation && seancesAvecRattrapageSet.has(item.data.id) && (
+                        <span className="badge-rattrapage" title="Rattrapage de devoir prévu pendant ce cours">
+                          ↻
+                        </span>
+                      )}
                     </div>
                   )
                 })}
@@ -457,6 +482,11 @@ function Semaine() {
                                   ↗
                                 </a>
                               )}
+                              {!estEvaluation && seancesAvecRattrapageSet.has(item.data.id) && (
+                                <span className="badge-rattrapage" title="Rattrapage de devoir prévu pendant ce cours">
+                                  ↻
+                                </span>
+                              )}
                             </div>
                           )
                         })}
@@ -477,6 +507,14 @@ function Semaine() {
         (() => {
           const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne)
           const seance = itemSelectionne.kind === 'seance' ? itemSelectionne.data : null
+          const classeId = itemSelectionne.data.planning.classe_id
+          const classeEleves = tousEleves.filter((e) => e.classe_id === classeId)
+          const presences = estEvaluation
+            ? construirePresences(classeEleves, itemSelectionne.data.id, absences)
+            : undefined
+          const rattrapagesDisponibles = seance
+            ? rattrapagesPourSeance(seance.id, classeId, absences, tousEleves, evaluationsAnnee)
+            : undefined
           return (
             <SeancePanel
               titre={titre}
@@ -491,6 +529,8 @@ function Semaine() {
               motifAnnulation={seance?.motif_annulation ?? null}
               notesSeance={seance?.notes_seance ?? null}
               ressourceUrl={ressource?.url}
+              presences={presences}
+              rattrapagesDisponibles={rattrapagesDisponibles}
               onToggleFait={(fait) => toggleFait(itemSelectionne, fait)}
               onEnregistrerNote={
                 seance ? (notes) => handleEnregistrerNote(itemSelectionne, notes) : undefined
@@ -499,6 +539,12 @@ function Semaine() {
                 seance ? (date, heure) => handleDeplacer(itemSelectionne, date, heure) : undefined
               }
               onAnnuler={(motif) => handleAnnuler(itemSelectionne, motif)}
+              onEnregistrerPresences={
+                estEvaluation ? (absents) => handleEnregistrerPresences(itemSelectionne.data.id, absents) : undefined
+              }
+              onEnregistrerRattrapages={
+                seance ? (ids) => handleEnregistrerRattrapages(seance.id, ids) : undefined
+              }
               onClose={() => setItemSelectionne(null)}
             />
           )
