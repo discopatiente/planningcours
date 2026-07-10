@@ -145,7 +145,7 @@ function Jour() {
                         {classe?.nom ?? '?'} — {matiere?.nom ?? '?'}
                       </span>
                     </span>
-                    {item.data.statut !== 'annulee' && item.data.statut !== 'retard' && (
+                    {item.data.statut !== 'annulee' && (
                       <input
                         type="checkbox"
                         checked={fait}

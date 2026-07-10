@@ -139,7 +139,7 @@ function Gantt() {
 
     if (mode === 'charge') {
       const dates = [
-        ...seancesVisibles.filter((s) => s.statut !== 'annulee' && s.statut !== 'retard').map((s) => s.date),
+        ...seancesVisibles.filter((s) => s.statut !== 'annulee').map((s) => s.date),
         ...evaluationsVisibles.filter((e) => e.statut !== 'annulee').map((e) => e.date),
       ]
       return [

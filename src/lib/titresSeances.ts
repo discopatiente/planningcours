@@ -26,18 +26,15 @@ export function titreUnite(
   return seance.override_titre ?? unite?.titre ?? '(unité supprimée)'
 }
 
-// Libellé d'un créneau vide (trou) : distingue une vraie annulation d'un
-// décalage de retard de progression, pour ne jamais les confondre à
-// l'affichage — ce sont deux mécanismes volontairement séparés.
-export function libelleTrou(statut: 'annulee' | 'retard', motif: string | null): string {
-  if (statut === 'retard') return 'Progression décalée — à rattraper'
+// Libellé d'un créneau vide (trou d'annulation).
+export function libelleTrou(motif: string | null): string {
   return motif ? `Séance annulée — ${motif}` : 'Séance annulée'
 }
 
 // Séance immédiatement avant `seance` dans le même planning, parmi celles
 // fournies — retrouvée dynamiquement par ordre chronologique plutôt que par
 // un pointeur stocké, donc toujours correcte même après un décalage
-// ultérieur (annulation, retard, déplacement...).
+// ultérieur (annulation, déplacement...).
 export function trouverSeancePrecedente<T extends SeanceTitrable>(seance: T, seancesDuPlanning: T[]): T | null {
   let precedente: T | null = null
   for (const s of seancesDuPlanning) {
@@ -46,6 +43,19 @@ export function trouverSeancePrecedente<T extends SeanceTitrable>(seance: T, sea
     if (!precedente || estApres(s, precedente)) precedente = s
   }
   return precedente
+}
+
+// Séance `a_venir` immédiatement après `seance` dans le même planning, parmi
+// celles fournies — sert à savoir si l'action « j'ai de l'avance » a bien
+// quelque chose à absorber.
+export function trouverSeanceSuivante<T extends SeanceTitrable>(seance: T, seancesDuPlanning: T[]): T | null {
+  let suivante: T | null = null
+  for (const s of seancesDuPlanning) {
+    if (s.id === seance.id || s.planning_id !== seance.planning_id || s.statut !== 'a_venir') continue
+    if (!estApres(s, seance)) continue
+    if (!suivante || estApres(suivante, s)) suivante = s
+  }
+  return suivante
 }
 
 // Titre affiché pour une séance normale (pas un trou) : combine avec la

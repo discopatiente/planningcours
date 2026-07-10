@@ -1,4 +1,4 @@
-export type StatutSeance = 'a_venir' | 'fait' | 'annulee' | 'deplacee' | 'retard'
+export type StatutSeance = 'a_venir' | 'fait' | 'annulee' | 'deplacee'
 
 export interface Seance {
   id: string

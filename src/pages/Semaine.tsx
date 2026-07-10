@@ -17,15 +17,16 @@ import { updateSeance } from '../lib/seances'
 import {
   annulerSeance,
   ajouterSeanceExceptionnelle,
-  decalerProgressionRetard,
+  ajouterSeanceRepetition,
+  avancerProgression,
   deplacerSeance,
-  rattraperRetard,
 } from '../lib/seanceActions'
 import { reporterEvaluation } from '../lib/evaluationActions'
 import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
 import { construireRessourcesImprimablesParUnite } from '../lib/impressions'
 import { construirePresences, rattrapagesPourSeance, seancesAvecRattrapage } from '../lib/absences'
 import { construireRessourcePrincipaleParUnite, detailsItem, formatHeure, matiereDeProgression } from '../lib/semaineItems'
+import { trouverSeanceSuivante } from '../lib/titresSeances'
 import type { ItemJour } from '../lib/semaineItems'
 import SeancePanel from '../components/SeancePanel'
 import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
@@ -264,18 +265,18 @@ function Semaine() {
     await reload()
   }
 
-  async function handleDecalerRetard(item: ItemJour) {
+  async function handleAjouterRepetition(item: ItemJour) {
     if (item.kind === 'evaluation' || !anneeActive) return
     const seance = item.data
     const matiere = matiereDeProgression(seance.planning.progression_id, ctxItems)
     if (!matiere) return
-    await decalerProgressionRetard(seance, seance.planning.classe_id, matiere.id, anneeActive)
+    await ajouterSeanceRepetition(seance, seance.planning.classe_id, matiere.id, anneeActive)
     await reload()
   }
 
-  async function handleRattraperRetard(item: ItemJour) {
+  async function handleAvancerProgression(item: ItemJour) {
     if (item.kind === 'evaluation') return
-    await rattraperRetard(item.data, item.data.planning.progression_id)
+    await avancerProgression(item.data, item.data.planning.progression_id)
     await reload()
   }
 
@@ -369,7 +370,7 @@ function Semaine() {
                           {classe?.nom ?? '?'} — {matiere?.nom ?? '?'}
                         </span>
                       </span>
-                      {item.data.statut !== 'annulee' && item.data.statut !== 'retard' && (
+                      {item.data.statut !== 'annulee' && (
                         <input
                           type="checkbox"
                           checked={item.data.statut === 'fait'}
@@ -443,7 +444,7 @@ function Semaine() {
                             >
                               <span className="cg-evenement-titre">{titre}</span>
                               <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
-                              {item.data.statut !== 'annulee' && item.data.statut !== 'retard' && (
+                              {item.data.statut !== 'annulee' && (
                                 <input
                                   type="checkbox"
                                   checked={item.data.statut === 'fait'}
@@ -496,6 +497,11 @@ function Semaine() {
           const rattrapagesDisponibles = seance
             ? rattrapagesPourSeance(seance.id, classeId, absences, tousEleves, evaluationsAnnee)
             : undefined
+          // seancesFenetreAlertes (fenêtre élargie, +21 jours) plutôt que
+          // seances (limitée à la semaine affichée) : la séance suivante
+          // d'une classe qui n'a cours qu'une fois par semaine tombe presque
+          // toujours hors de la semaine actuellement affichée.
+          const aSeanceSuivante = seance ? trouverSeanceSuivante(seance, seancesFenetreAlertes) !== null : false
           return (
             <SeancePanel
               titre={titre}
@@ -507,10 +513,10 @@ function Semaine() {
               fait={itemSelectionne.data.statut === 'fait'}
               estEvaluation={estEvaluation}
               estAnnulee={itemSelectionne.data.statut === 'annulee'}
-              estRetard={seance?.statut === 'retard'}
               motifAnnulation={seance?.motif_annulation ?? null}
               notesSeance={seance?.notes_seance ?? null}
               nonTerminee={seance?.non_terminee ?? false}
+              aSeanceSuivante={aSeanceSuivante}
               ressourceUrl={ressource?.url}
               presences={presences}
               rattrapagesDisponibles={rattrapagesDisponibles}
@@ -531,11 +537,11 @@ function Semaine() {
               onToggleNonTerminee={
                 seance ? (val) => handleToggleNonTerminee(itemSelectionne, val) : undefined
               }
-              onDecalerRetard={
-                seance && seance.statut !== 'retard' ? () => handleDecalerRetard(itemSelectionne) : undefined
+              onAjouterRepetition={
+                seance ? () => handleAjouterRepetition(itemSelectionne) : undefined
               }
-              onRattraperRetard={
-                seance?.statut === 'retard' ? () => handleRattraperRetard(itemSelectionne) : undefined
+              onAvancerProgression={
+                seance ? () => handleAvancerProgression(itemSelectionne) : undefined
               }
               onClose={() => setItemSelectionne(null)}
             />

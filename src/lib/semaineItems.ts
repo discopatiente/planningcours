@@ -56,11 +56,11 @@ export function detailsItem(item: ItemJour, ctx: ContexteItemsJour, seancesDuPla
   const matiere = matiereDeProgression(item.data.planning.progression_id, ctx)
   const estEvaluation = item.kind === 'evaluation'
   const seance = estEvaluation ? null : (item.data as SeanceAvecPlanning)
-  const estTrou = seance !== null && (seance.statut === 'annulee' || seance.statut === 'retard') && seance.unite_id === null
+  const estTrou = seance !== null && seance.statut === 'annulee' && seance.unite_id === null
   const titre = estEvaluation
     ? (item.data as EvaluationAvecPlanning).titre ?? 'Évaluation'
     : estTrou
-      ? libelleTrou(seance!.statut as 'annulee' | 'retard', seance!.motif_annulation)
+      ? libelleTrou(seance!.motif_annulation)
       : titreAvecDebordement(seance!, ctx.unitesParId.get(seance!.unite_id ?? ''), seancesDuPlanning, ctx.unitesParId)
   const ressource = !estEvaluation ? ctx.ressourcePrincipaleParUnite.get(seance!.unite_id ?? '') : undefined
   return { classe, matiere, estEvaluation, titre, ressource }

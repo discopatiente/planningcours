@@ -12,10 +12,10 @@ interface SeancePanelProps {
   fait: boolean
   estEvaluation: boolean
   estAnnulee: boolean
-  estRetard: boolean
   motifAnnulation: string | null
   notesSeance: string | null
   nonTerminee: boolean
+  aSeanceSuivante: boolean
   ressourceUrl?: string
   presences?: PresenceEleve[]
   rattrapagesDisponibles?: RattrapageDisponible[]
@@ -26,8 +26,8 @@ interface SeancePanelProps {
   onEnregistrerPresences?: (eleveIdsAbsents: string[]) => Promise<void>
   onEnregistrerRattrapages?: (absenceIds: string[]) => Promise<void>
   onToggleNonTerminee?: (nonTerminee: boolean) => Promise<void>
-  onDecalerRetard?: () => Promise<void>
-  onRattraperRetard?: () => Promise<void>
+  onAjouterRepetition?: () => Promise<void>
+  onAvancerProgression?: () => Promise<void>
   onClose: () => void
 }
 
@@ -49,10 +49,10 @@ function SeancePanel({
   fait,
   estEvaluation,
   estAnnulee,
-  estRetard,
   motifAnnulation,
   notesSeance,
   nonTerminee,
+  aSeanceSuivante,
   ressourceUrl,
   presences,
   rattrapagesDisponibles,
@@ -63,8 +63,8 @@ function SeancePanel({
   onEnregistrerPresences,
   onEnregistrerRattrapages,
   onToggleNonTerminee,
-  onDecalerRetard,
-  onRattraperRetard,
+  onAjouterRepetition,
+  onAvancerProgression,
   onClose,
 }: SeancePanelProps) {
   const [notes, setNotes] = useState(notesSeance ?? '')
@@ -74,8 +74,8 @@ function SeancePanel({
   const [deplacing, setDeplacing] = useState(false)
   const [motif, setMotif] = useState('')
   const [annulation, setAnnulation] = useState(false)
-  const [decalage, setDecalage] = useState(false)
-  const [rattrapageRetard, setRattrapageRetard] = useState(false)
+  const [ajoutRepetition, setAjoutRepetition] = useState(false)
+  const [avance, setAvance] = useState(false)
   const [presentsCoches, setPresentsCoches] = useState<Record<string, boolean>>(() =>
     Object.fromEntries((presences ?? []).map((p) => [p.eleveId, !p.absent])),
   )
@@ -96,35 +96,6 @@ function SeancePanel({
         <p className="seance-panel-annulee">
           Séance annulée{motifAnnulation ? ` — ${motifAnnulation}` : ''}.
         </p>
-      ) : estRetard ? (
-        <>
-          <p className="seance-panel-annulee">
-            Ce créneau a été laissé vide pour rattraper un retard de progression.
-          </p>
-          {onRattraperRetard && (
-            <div className="modal-field-group">
-              <button
-                type="button"
-                className="btn-sm btn-primary"
-                disabled={rattrapageRetard}
-                onClick={async () => {
-                  setRattrapageRetard(true)
-                  try {
-                    await onRattraperRetard()
-                    onClose()
-                  } finally {
-                    setRattrapageRetard(false)
-                  }
-                }}
-              >
-                Rattraper (avancer la progression)
-              </button>
-              <span className="modal-field-hint">
-                Supprime ce créneau vide et remonte toutes les séances suivantes d'un cran.
-              </span>
-            </div>
-          )}
-        </>
       ) : (
         <>
           <label className="modal-field modal-field-inline">
@@ -277,29 +248,57 @@ function SeancePanel({
             </div>
           )}
 
-          {!estEvaluation && onDecalerRetard && (
+          {!estEvaluation && (onAjouterRepetition || onAvancerProgression) && (
             <div className="modal-field-group">
-              <span className="modal-field-title">Décaler la progression</span>
-              <button
-                type="button"
-                className="btn-sm"
-                disabled={decalage}
-                onClick={async () => {
-                  setDecalage(true)
-                  try {
-                    await onDecalerRetard()
-                    onClose()
-                  } finally {
-                    setDecalage(false)
-                  }
-                }}
-              >
-                Décaler pour rattraper mon retard
-              </button>
-              <span className="modal-field-hint">
-                À utiliser en cas de retard trop important : ce créneau devient vide et toutes les séances
-                suivantes reculent d'un cran. Réversible depuis le créneau vide créé.
-              </span>
+              <span className="modal-field-title">Ajuster le rythme</span>
+              {onAjouterRepetition && (
+                <>
+                  <button
+                    type="button"
+                    className="btn-sm"
+                    disabled={ajoutRepetition}
+                    onClick={async () => {
+                      setAjoutRepetition(true)
+                      try {
+                        await onAjouterRepetition()
+                        onClose()
+                      } finally {
+                        setAjoutRepetition(false)
+                      }
+                    }}
+                  >
+                    Besoin d'une séance de plus sur cette unité
+                  </button>
+                  <span className="modal-field-hint">
+                    Cette séance n'est pas modifiée. Une nouvelle séance sur la même unité est insérée
+                    juste après, et toutes les séances suivantes reculent d'un cran.
+                  </span>
+                </>
+              )}
+              {onAvancerProgression && aSeanceSuivante && (
+                <>
+                  <button
+                    type="button"
+                    className="btn-sm"
+                    disabled={avance}
+                    onClick={async () => {
+                      setAvance(true)
+                      try {
+                        await onAvancerProgression()
+                        onClose()
+                      } finally {
+                        setAvance(false)
+                      }
+                    }}
+                  >
+                    J'ai de l'avance, la séance suivante est déjà couverte
+                  </button>
+                  <span className="modal-field-hint">
+                    La séance suivante est marquée faite à la date d'aujourd'hui plutôt que supprimée, et
+                    toutes les séances suivantes avancent d'un cran.
+                  </span>
+                </>
+              )}
             </div>
           )}
 

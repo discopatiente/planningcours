@@ -35,8 +35,8 @@ type SeanceGantt = Pick<
 /**
  * Regroupe les séances d'une ligne par jour : un jour avec plusieurs séances
  * affiche un compteur plutôt que d'empiler des titres illisibles. Les
- * séances annulées ou décalées pour retard (trous sans unité) ne comptent
- * pas comme de la charge de travail à afficher.
+ * séances annulées (trous sans unité) ne comptent pas comme de la charge de
+ * travail à afficher.
  */
 export function construireBlocsSeances(
   seances: SeanceGantt[],
@@ -46,7 +46,7 @@ export function construireBlocsSeances(
 ): BlocGantt[] {
   const parDate = new Map<string, typeof seances>()
   for (const s of seances) {
-    if ((s.statut === 'annulee' || s.statut === 'retard') && s.unite_id === null) continue
+    if (s.statut === 'annulee' && s.unite_id === null) continue
     const liste = parDate.get(s.date) ?? []
     liste.push(s)
     parDate.set(s.date, liste)
