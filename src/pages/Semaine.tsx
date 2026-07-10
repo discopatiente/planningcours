@@ -7,11 +7,15 @@ import { useUnites } from '../hooks/useUnites'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
 import { usePlannings } from '../hooks/usePlannings'
+import { useParametres } from '../hooks/useParametres'
+import { useImpressions } from '../hooks/useImpressions'
 import { calculerSemaine, lundiDeLaSemaine } from '../lib/semaineAB'
 import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
 import { updateSeance } from '../lib/seances'
 import { annulerSeance, ajouterSeanceExceptionnelle, deplacerSeance } from '../lib/seanceActions'
-import { calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
+import { reporterEvaluation } from '../lib/evaluationActions'
+import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
+import { TYPES_RESSOURCES_IMPRIMABLES } from '../lib/impressions'
 import SeancePanel from '../components/SeancePanel'
 import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
 import AlertesPreparation from '../components/AlertesPreparation'
@@ -56,6 +60,8 @@ function Semaine() {
   const { progressions } = useProgressions()
   const { unites } = useUnites()
   const { ressources } = useRessourcesToutes()
+  const { parametres } = useParametres()
+  const { etats: etatsImpressions } = useImpressions()
 
   const [vue, setVue] = useState<'liste' | 'calendrier'>('liste')
   const [dateReference, setDateReference] = useState(() => toISODate(new Date()))
@@ -83,7 +89,6 @@ function Semaine() {
     reload,
     marquerSeanceFaite,
     marquerEvaluationFaite,
-    annulerEvaluation,
   } = useSemaine(anneeActive?.id ?? null, lundi, vendredi)
   const { plannings } = usePlannings(anneeActive?.id ?? null)
 
@@ -106,16 +111,61 @@ function Semaine() {
     return map
   }, [ressources])
 
+  const ressourcesImprimablesParUnite = useMemo(() => {
+    const map = new Map<string, Ressource[]>()
+    for (const r of ressources) {
+      if (!TYPES_RESSOURCES_IMPRIMABLES.includes(r.type)) continue
+      const liste = map.get(r.unite_id) ?? []
+      liste.push(r)
+      map.set(r.unite_id, liste)
+    }
+    return map
+  }, [ressources])
+
   const alertesImpression = useMemo(
     () =>
-      calculerAlertesImpression(seancesFenetreAlertes, unitesParId, lundi, vendredi).map((a) => ({
+      calculerAlertesImpression(
+        seancesFenetreAlertes,
+        unitesParId,
+        lundi,
+        vendredi,
+        ressourcesImprimablesParUnite,
+        etatsImpressions,
+      ).map((a) => ({
         id: a.seance.id,
         dateSeance: a.seance.date,
         titre: a.titre,
         classeNom: classesParId.get(a.seance.planning.classe_id)?.nom ?? '?',
         ressourceUrl: a.seance.unite_id ? ressourcePrincipaleParUnite.get(a.seance.unite_id)?.url : undefined,
       })),
-    [seancesFenetreAlertes, unitesParId, lundi, vendredi, classesParId, ressourcePrincipaleParUnite],
+    [
+      seancesFenetreAlertes,
+      unitesParId,
+      lundi,
+      vendredi,
+      classesParId,
+      ressourcePrincipaleParUnite,
+      ressourcesImprimablesParUnite,
+      etatsImpressions,
+    ],
+  )
+
+  const alertesDistribution = useMemo(
+    () =>
+      calculerAlertesDistribution(
+        seances,
+        unitesParId,
+        ressourcesImprimablesParUnite,
+        etatsImpressions,
+        lundi,
+        vendredi,
+      ).map((a) => ({
+        id: a.seance.id,
+        dateSeance: a.seance.date,
+        titre: a.titre,
+        classeNom: classesParId.get(a.seance.planning.classe_id)?.nom ?? '?',
+      })),
+    [seances, unitesParId, ressourcesImprimablesParUnite, etatsImpressions, lundi, vendredi, classesParId],
   )
 
   const alertesInstructions = useMemo(
@@ -187,11 +237,23 @@ function Semaine() {
   )
 
   async function handleAnnuler(item: ItemJour, motif: string | null) {
+    if (!anneeActive) return
     if (item.kind === 'evaluation') {
-      await annulerEvaluation(item.data.id)
+      if (!parametres) return
+      const evaluation = item.data
+      const matiere = matiereDeProgression(evaluation.planning.progression_id)
+      if (!matiere) return
+      await reporterEvaluation(
+        evaluation,
+        evaluation.planning.classe_id,
+        matiere.id,
+        matiere.max_evaluations_exclu,
+        anneeActive,
+        parametres.max_evaluations_semaine,
+      )
+      await reload()
       return
     }
-    if (!anneeActive) return
     const seance = item.data
     const matiere = matiereDeProgression(seance.planning.progression_id)
     if (!matiere) return
@@ -274,7 +336,11 @@ function Semaine() {
         !loading &&
         (vue === 'liste' ? (
           <div className="semaine-jours-wrapper">
-            <AlertesPreparation impressions={alertesImpression} instructions={alertesInstructions} />
+            <AlertesPreparation
+              impressions={alertesImpression}
+              distributions={alertesDistribution}
+              instructions={alertesInstructions}
+            />
             <div className="semaine-jours">
             {jours.map((jour, index) => (
               <div className="semaine-jour" key={jour}>

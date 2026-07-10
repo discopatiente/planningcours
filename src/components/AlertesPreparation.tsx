@@ -14,8 +14,16 @@ interface AlerteInstructionAffichage {
   instruction: string
 }
 
+interface AlerteDistributionAffichage {
+  id: string
+  dateSeance: string
+  titre: string
+  classeNom: string
+}
+
 interface AlertesPreparationProps {
   impressions: AlerteImpressionAffichage[]
+  distributions: AlerteDistributionAffichage[]
   instructions: AlerteInstructionAffichage[]
 }
 
@@ -23,8 +31,8 @@ function formatDateCourte(dateStr: string) {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-function AlertesPreparation({ impressions, instructions }: AlertesPreparationProps) {
-  if (impressions.length === 0 && instructions.length === 0) return null
+function AlertesPreparation({ impressions, distributions, instructions }: AlertesPreparationProps) {
+  if (impressions.length === 0 && distributions.length === 0 && instructions.length === 0) return null
 
   return (
     <div className="alertes-bar">
@@ -43,6 +51,22 @@ function AlertesPreparation({ impressions, instructions }: AlertesPreparationPro
                     ↗ Ouvrir
                   </a>
                 )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {distributions.length > 0 && (
+        <div className="alertes-section">
+          <span className="alertes-titre">📦 Documents à distribuer cette semaine ({distributions.length})</span>
+          <ul className="alertes-liste">
+            {distributions.map((a) => (
+              <li key={a.id} className="alertes-item">
+                <span className="alertes-item-date">{formatDateCourte(a.dateSeance)}</span>
+                <span>
+                  {a.titre} — {a.classeNom}
+                </span>
               </li>
             ))}
           </ul>

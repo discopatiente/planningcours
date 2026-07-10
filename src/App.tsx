@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth'
 import Sidebar from './components/Sidebar'
 import Login from './pages/Login'
 import Semaine from './pages/Semaine'
+import Impressions from './pages/Impressions'
 import Gantt from './pages/Gantt'
 import Chapitres from './pages/Chapitres'
 import UnitesDeCours from './pages/UnitesDeCours'
@@ -33,6 +34,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<Navigate to="/semaine" replace />} />
           <Route path="/semaine" element={<Semaine />} />
+          <Route path="/impressions" element={<Impressions />} />
           <Route path="/gantt" element={<Gantt />} />
           <Route path="/chapitres" element={<Chapitres />} />
           <Route path="/unites-de-cours" element={<UnitesDeCours />} />

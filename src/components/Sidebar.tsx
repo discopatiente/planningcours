@@ -5,6 +5,7 @@ function Sidebar() {
   return (
     <nav className="sidebar">
       <NavLink to="/semaine">Semaine</NavLink>
+      <NavLink to="/impressions">Impressions</NavLink>
       <NavLink to="/gantt">Gantt</NavLink>
       <NavLink to="/chapitres">Chapitres</NavLink>
       <NavLink to="/unites-de-cours">Unités de cours</NavLink>

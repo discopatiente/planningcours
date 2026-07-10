@@ -1,6 +1,9 @@
 import type { SeanceAvecPlanning } from '../types/seance'
 import type { Unite } from '../types/unite'
+import type { Ressource } from '../types/ressource'
+import type { EtatRessourceSeance } from '../types/impression'
 import { ajouterJours, parseISODate, toISODate } from './dates'
+import { cleEtatRessourceSeance } from './impressions'
 
 // Fenêtre de recherche au-delà du vendredi de la semaine affichée : une
 // séance de la semaine suivante peut avoir une échéance de préparation
@@ -28,25 +31,86 @@ function titreSeance(seance: SeanceAvecPlanning, unite: Unite | undefined): stri
   return seance.override_titre ?? unite?.titre ?? '(unité supprimée)'
 }
 
+// Ressources physiquement imprimées/distribuées de la séance (typées support,
+// exercice, devoir_possible — voir TYPES_RESSOURCES_IMPRIMABLES). Une unité
+// sans aucune ressource de ce type n'a rien à cocher : on ne peut pas
+// considérer l'impression « faite », donc l'alerte reste pilotée par le
+// délai seul dans ce cas.
+function ressourcesImprimablesSeance(
+  seance: SeanceAvecPlanning,
+  ressourcesParUnite: Map<string, Ressource[]>,
+): Ressource[] {
+  return seance.unite_id ? ressourcesParUnite.get(seance.unite_id) ?? [] : []
+}
+
+function toutesRessourcesImprimees(
+  seance: SeanceAvecPlanning,
+  ressourcesParUnite: Map<string, Ressource[]>,
+  etats: Map<string, EtatRessourceSeance>,
+): boolean {
+  const ressources = ressourcesImprimablesSeance(seance, ressourcesParUnite)
+  if (ressources.length === 0) return false
+  return ressources.every((r) => etats.get(cleEtatRessourceSeance(seance.id, r.id))?.imprime ?? false)
+}
+
+function toutesRessourcesDistribuees(
+  seance: SeanceAvecPlanning,
+  ressourcesParUnite: Map<string, Ressource[]>,
+  etats: Map<string, EtatRessourceSeance>,
+): boolean {
+  const ressources = ressourcesImprimablesSeance(seance, ressourcesParUnite)
+  if (ressources.length === 0) return false
+  return ressources.every((r) => etats.get(cleEtatRessourceSeance(seance.id, r.id))?.distribue ?? false)
+}
+
 /**
  * Séances dont l'échéance d'impression (date du cours − délai d'impression
  * de l'unité, ou son override) tombe dans la semaine affichée — y compris
- * pour des séances qui ont lieu la semaine suivante.
+ * pour des séances qui ont lieu la semaine suivante. Une séance dont toutes
+ * les ressources imprimables sont déjà cochées « imprimé » (onglet
+ * Impressions) sort de la liste : il n'y a plus rien à rappeler.
  */
 export function calculerAlertesImpression(
   seances: SeanceAvecPlanning[],
   unitesParId: Map<string, Unite>,
   lundi: string,
   vendredi: string,
+  ressourcesParUnite: Map<string, Ressource[]>,
+  etats: Map<string, EtatRessourceSeance>,
 ): AlertePreparation[] {
   const resultat: AlertePreparation[] = []
   for (const s of seancesActives(seances)) {
+    if (toutesRessourcesImprimees(s, ressourcesParUnite, etats)) continue
     const unite = s.unite_id ? unitesParId.get(s.unite_id) : undefined
     const delai = s.override_delai_impression_jours ?? unite?.delai_impression_jours ?? null
     if (delai === null) continue
     const echeance = dateEcheance(s.date, delai)
     if (echeance < lundi || echeance > vendredi) continue
     resultat.push({ seance: s, titre: titreSeance(s, unite), dateEcheance: echeance })
+  }
+  return resultat.sort((a, b) => a.dateEcheance.localeCompare(b.dateEcheance))
+}
+
+/**
+ * Séances de la semaine affichée dont les ressources imprimables sont
+ * toutes imprimées mais pas encore toutes distribuées — prend le relais du
+ * rappel d'impression une fois celui-ci coché dans l'onglet Impressions.
+ */
+export function calculerAlertesDistribution(
+  seances: SeanceAvecPlanning[],
+  unitesParId: Map<string, Unite>,
+  ressourcesParUnite: Map<string, Ressource[]>,
+  etats: Map<string, EtatRessourceSeance>,
+  lundi: string,
+  vendredi: string,
+): AlertePreparation[] {
+  const resultat: AlertePreparation[] = []
+  for (const s of seancesActives(seances)) {
+    if (s.date < lundi || s.date > vendredi) continue
+    if (!toutesRessourcesImprimees(s, ressourcesParUnite, etats)) continue
+    if (toutesRessourcesDistribuees(s, ressourcesParUnite, etats)) continue
+    const unite = s.unite_id ? unitesParId.get(s.unite_id) : undefined
+    resultat.push({ seance: s, titre: titreSeance(s, unite), dateEcheance: s.date })
   }
   return resultat.sort((a, b) => a.dateEcheance.localeCompare(b.dateEcheance))
 }
