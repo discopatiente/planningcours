@@ -379,16 +379,24 @@ h2 {
   border: 1px solid var(--border);
   width: 360px;
   max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: -20px;
+  margin: -20px -20px 0;
+  padding: 20px 20px 0;
+  background: var(--bg);
+  z-index: 1;
 }
 
 .modal-header h3 {

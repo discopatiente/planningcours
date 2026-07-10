@@ -14,7 +14,13 @@ import { useAbsences } from '../hooks/useAbsences'
 import { calculerSemaine, lundiDeLaSemaine } from '../lib/semaineAB'
 import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
 import { updateSeance } from '../lib/seances'
-import { annulerSeance, ajouterSeanceExceptionnelle, deplacerSeance } from '../lib/seanceActions'
+import {
+  annulerSeance,
+  ajouterSeanceExceptionnelle,
+  decalerProgressionRetard,
+  deplacerSeance,
+  rattraperRetard,
+} from '../lib/seanceActions'
 import { reporterEvaluation } from '../lib/evaluationActions'
 import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
 import { construireRessourcesImprimablesParUnite } from '../lib/impressions'
@@ -252,6 +258,27 @@ function Semaine() {
     await definirRattrapages(seanceId, absenceIds)
   }
 
+  async function handleToggleNonTerminee(item: ItemJour, nonTerminee: boolean) {
+    if (item.kind === 'evaluation') return
+    await updateSeance(item.data.id, { non_terminee: nonTerminee })
+    await reload()
+  }
+
+  async function handleDecalerRetard(item: ItemJour) {
+    if (item.kind === 'evaluation' || !anneeActive) return
+    const seance = item.data
+    const matiere = matiereDeProgression(seance.planning.progression_id, ctxItems)
+    if (!matiere) return
+    await decalerProgressionRetard(seance, seance.planning.classe_id, matiere.id, anneeActive)
+    await reload()
+  }
+
+  async function handleRattraperRetard(item: ItemJour) {
+    if (item.kind === 'evaluation') return
+    await rattraperRetard(item.data, item.data.planning.progression_id)
+    await reload()
+  }
+
   const aujourdhuiDansLaSemaine = jours.includes(aujourdhui)
   const decimaleActuelle = heureActuelle.getHours() + heureActuelle.getMinutes() / 60
   const ligneActuelleVisible =
@@ -325,7 +352,7 @@ function Semaine() {
                 {itemsParJour.get(jour)?.length === 0 && <p className="semaine-jour-vide">Aucun cours</p>}
 
                 {itemsParJour.get(jour)?.map((item) => {
-                  const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems)
+                  const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems, seances)
                   const passee = jour < aujourdhui
 
                   return (
@@ -342,7 +369,7 @@ function Semaine() {
                           {classe?.nom ?? '?'} — {matiere?.nom ?? '?'}
                         </span>
                       </span>
-                      {item.data.statut !== 'annulee' && (
+                      {item.data.statut !== 'annulee' && item.data.statut !== 'retard' && (
                         <input
                           type="checkbox"
                           checked={item.data.statut === 'fait'}
@@ -406,7 +433,7 @@ function Semaine() {
                     return (
                       <div className={`cg-cell${jourVide ? ' cg-cell-vide' : ''}`} key={`${jour}-${heure}`}>
                         {items.map((item) => {
-                          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems)
+                          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems, seances)
                           return (
                             <div
                               key={item.data.id}
@@ -416,7 +443,7 @@ function Semaine() {
                             >
                               <span className="cg-evenement-titre">{titre}</span>
                               <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
-                              {item.data.statut !== 'annulee' && (
+                              {item.data.statut !== 'annulee' && item.data.statut !== 'retard' && (
                                 <input
                                   type="checkbox"
                                   checked={item.data.statut === 'fait'}
@@ -459,7 +486,7 @@ function Semaine() {
 
       {itemSelectionne &&
         (() => {
-          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne, ctxItems)
+          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne, ctxItems, seances)
           const seance = itemSelectionne.kind === 'seance' ? itemSelectionne.data : null
           const classeId = itemSelectionne.data.planning.classe_id
           const classeEleves = tousEleves.filter((e) => e.classe_id === classeId)
@@ -480,8 +507,10 @@ function Semaine() {
               fait={itemSelectionne.data.statut === 'fait'}
               estEvaluation={estEvaluation}
               estAnnulee={itemSelectionne.data.statut === 'annulee'}
+              estRetard={seance?.statut === 'retard'}
               motifAnnulation={seance?.motif_annulation ?? null}
               notesSeance={seance?.notes_seance ?? null}
+              nonTerminee={seance?.non_terminee ?? false}
               ressourceUrl={ressource?.url}
               presences={presences}
               rattrapagesDisponibles={rattrapagesDisponibles}
@@ -498,6 +527,15 @@ function Semaine() {
               }
               onEnregistrerRattrapages={
                 seance ? (ids) => handleEnregistrerRattrapages(seance.id, ids) : undefined
+              }
+              onToggleNonTerminee={
+                seance ? (val) => handleToggleNonTerminee(itemSelectionne, val) : undefined
+              }
+              onDecalerRetard={
+                seance && seance.statut !== 'retard' ? () => handleDecalerRetard(itemSelectionne) : undefined
+              }
+              onRattraperRetard={
+                seance?.statut === 'retard' ? () => handleRattraperRetard(itemSelectionne) : undefined
               }
               onClose={() => setItemSelectionne(null)}
             />

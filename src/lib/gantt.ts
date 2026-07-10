@@ -1,5 +1,6 @@
 import { ajouterJours, parseISODate, toISODate } from './dates'
 import { lundiDeLaSemaine } from './semaineAB'
+import { titreAvecDebordement } from './titresSeances'
 import type { SeanceAvecPlanning } from '../types/seance'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
 import type { Unite } from '../types/unite'
@@ -26,20 +27,26 @@ export interface PointEvaluation {
   passee: boolean
 }
 
+type SeanceGantt = Pick<
+  SeanceAvecPlanning,
+  'id' | 'planning_id' | 'date' | 'heure_debut' | 'unite_id' | 'override_titre' | 'statut' | 'non_terminee' | 'motif_annulation'
+>
+
 /**
  * Regroupe les séances d'une ligne par jour : un jour avec plusieurs séances
  * affiche un compteur plutôt que d'empiler des titres illisibles. Les
- * séances annulées ne comptent pas comme de la charge de travail à afficher.
+ * séances annulées ou décalées pour retard (trous sans unité) ne comptent
+ * pas comme de la charge de travail à afficher.
  */
 export function construireBlocsSeances(
-  seances: Pick<SeanceAvecPlanning, 'id' | 'date' | 'unite_id' | 'override_titre' | 'statut'>[],
+  seances: SeanceGantt[],
   unitesParId: Map<string, Unite>,
   couleur: string,
   aujourdhui: string,
 ): BlocGantt[] {
   const parDate = new Map<string, typeof seances>()
   for (const s of seances) {
-    if (s.statut === 'annulee') continue
+    if ((s.statut === 'annulee' || s.statut === 'retard') && s.unite_id === null) continue
     const liste = parDate.get(s.date) ?? []
     liste.push(s)
     parDate.set(s.date, liste)
@@ -49,7 +56,7 @@ export function construireBlocsSeances(
   for (const [date, liste] of parDate) {
     const titre =
       liste.length === 1
-        ? liste[0].override_titre ?? unitesParId.get(liste[0].unite_id ?? '')?.titre ?? '(unité supprimée)'
+        ? titreAvecDebordement(liste[0], unitesParId.get(liste[0].unite_id ?? ''), seances, unitesParId)
         : `${liste.length} séances`
     blocs.push({
       id: `${date}-${liste.map((s) => s.id).join('-')}`,

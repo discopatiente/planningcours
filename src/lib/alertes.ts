@@ -4,6 +4,7 @@ import type { Ressource } from '../types/ressource'
 import type { EtatRessourceSeance } from '../types/impression'
 import { ajouterJours, parseISODate, toISODate } from './dates'
 import { cleEtatRessourceSeance } from './impressions'
+import { titreUnite } from './titresSeances'
 
 // Fenêtre de recherche au-delà du vendredi de la semaine affichée : une
 // séance de la semaine suivante peut avoir une échéance de préparation
@@ -25,10 +26,6 @@ function dateEcheance(date: string, delaiJours: number): string {
 
 function seancesActives(seances: SeanceAvecPlanning[]): SeanceAvecPlanning[] {
   return seances.filter((s) => s.statut === 'a_venir' || s.statut === 'deplacee')
-}
-
-function titreSeance(seance: SeanceAvecPlanning, unite: Unite | undefined): string {
-  return seance.override_titre ?? unite?.titre ?? '(unité supprimée)'
 }
 
 // Ressources physiquement imprimées/distribuées de la séance (typées support,
@@ -86,7 +83,7 @@ export function calculerAlertesImpression(
     if (delai === null) continue
     const echeance = dateEcheance(s.date, delai)
     if (echeance < lundi || echeance > vendredi) continue
-    resultat.push({ seance: s, titre: titreSeance(s, unite), dateEcheance: echeance })
+    resultat.push({ seance: s, titre: titreUnite(s, unite), dateEcheance: echeance })
   }
   return resultat.sort((a, b) => a.dateEcheance.localeCompare(b.dateEcheance))
 }
@@ -110,7 +107,7 @@ export function calculerAlertesDistribution(
     if (!toutesRessourcesImprimees(s, ressourcesParUnite, etats)) continue
     if (toutesRessourcesDistribuees(s, ressourcesParUnite, etats)) continue
     const unite = s.unite_id ? unitesParId.get(s.unite_id) : undefined
-    resultat.push({ seance: s, titre: titreSeance(s, unite), dateEcheance: s.date })
+    resultat.push({ seance: s, titre: titreUnite(s, unite), dateEcheance: s.date })
   }
   return resultat.sort((a, b) => a.dateEcheance.localeCompare(b.dateEcheance))
 }
@@ -135,7 +132,7 @@ export function calculerAlertesInstructionsEleves(
     if (delai === null) continue
     const echeance = dateEcheance(s.date, delai)
     if (echeance < lundi || echeance > vendredi) continue
-    resultat.push({ seance: s, titre: titreSeance(s, unite), dateEcheance: echeance, instruction })
+    resultat.push({ seance: s, titre: titreUnite(s, unite), dateEcheance: echeance, instruction })
   }
   return resultat.sort((a, b) => a.dateEcheance.localeCompare(b.dateEcheance))
 }

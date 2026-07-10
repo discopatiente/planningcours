@@ -10,6 +10,7 @@ import {
   fetchSeancesPlanning,
   insertSeanceExceptionnelle,
   insertSeanceTrouAnnule,
+  insertSeanceTrouRetard,
   updateSeance,
 } from './seances'
 import { genererDatesCreneaux, type CreneauDate } from './projectionEngine'
@@ -20,21 +21,21 @@ function cleCreneau(date: string, heureDebut: string): string {
 }
 
 /**
- * Annule une séance et déclenche le recalcul en cascade : le créneau annulé
- * devient un trou (nouvelle séance sans unité, statut `annulee`, motif
- * affiché), et le contenu (unité + overrides + notes) de chaque séance
- * suivante du planning glisse d'un cran vers le créneau suivant, jusqu'à la
- * dernière qui récupère le premier créneau libre restant dans l'année — ou
- * passe en excédent si aucun n'est disponible (débordement non bloquant).
- * Les séances déjà `fait` ou `deplacee` ne participent pas au glissement.
+ * Décale d'un cran vers plus tard toutes les séances `a_venir` du planning à
+ * partir de `seance` incluse : le créneau de `seance` glisse sur celui de la
+ * suivante, celui-ci sur le suivant, etc., jusqu'à la dernière qui récupère
+ * le premier créneau libre restant dans l'année — ou passe en excédent si
+ * aucun n'est disponible (débordement non bloquant). Les séances déjà
+ * `fait` ou `deplacee` ne participent pas au glissement. Ne pose pas le
+ * trou au créneau d'origine de `seance` : c'est à l'appelant de choisir le
+ * type de trou (annulation ou retard de progression).
  */
-export async function annulerSeance(
+async function decalerChaineEnAvant(
   seance: Seance,
-  motif: string | null,
   classeId: string,
   matiereId: string,
   anneeScolaire: AnneeScolaire,
-): Promise<void> {
+): Promise<number> {
   const [creneauxAnnee, periodes, seancesPlanning, evaluationsPlanning] = await Promise.all([
     fetchCreneaux(anneeScolaire.id),
     fetchPeriodesCalendrier(anneeScolaire.id),
@@ -71,11 +72,94 @@ export async function annulerSeance(
     }
   }
 
-  await insertSeanceTrouAnnule(seance.planning_id, seance.date, seance.heure_debut, motif)
+  return nbEnExcesSupplementaire
+}
 
+/**
+ * Annule une séance et déclenche le recalcul en cascade : le créneau annulé
+ * devient un trou (nouvelle séance sans unité, statut `annulee`, motif
+ * affiché), et le contenu (unité + overrides + notes) de chaque séance
+ * suivante du planning glisse d'un cran vers le créneau suivant.
+ */
+export async function annulerSeance(
+  seance: Seance,
+  motif: string | null,
+  classeId: string,
+  matiereId: string,
+  anneeScolaire: AnneeScolaire,
+): Promise<void> {
+  const nbEnExcesSupplementaire = await decalerChaineEnAvant(seance, classeId, matiereId, anneeScolaire)
+  await insertSeanceTrouAnnule(seance.planning_id, seance.date, seance.heure_debut, motif)
   if (nbEnExcesSupplementaire > 0) {
     const planning = await fetchPlanningById(seance.planning_id)
     await updateNbSeancesEnExces(planning.id, planning.nb_seances_en_exces + nbEnExcesSupplementaire)
+  }
+}
+
+/**
+ * Décale toute la suite de la progression d'un cran vers plus tard pour
+ * rattraper un retard trop important — même mécanique que `annulerSeance`,
+ * mais pose un trou de statut `retard` plutôt que `annulee` : ce n'est pas
+ * une vraie annulation (pas de motif), juste un choix de rythme. Symétrique
+ * de `rattraperRetard`, qui inverse ce décalage.
+ */
+export async function decalerProgressionRetard(
+  seance: Seance,
+  classeId: string,
+  matiereId: string,
+  anneeScolaire: AnneeScolaire,
+): Promise<void> {
+  const nbEnExcesSupplementaire = await decalerChaineEnAvant(seance, classeId, matiereId, anneeScolaire)
+  await insertSeanceTrouRetard(seance.planning_id, seance.date, seance.heure_debut)
+  if (nbEnExcesSupplementaire > 0) {
+    const planning = await fetchPlanningById(seance.planning_id)
+    await updateNbSeancesEnExces(planning.id, planning.nb_seances_en_exces + nbEnExcesSupplementaire)
+  }
+}
+
+/**
+ * Inverse un décalage de retard : supprime le trou `retard` désigné et
+ * remonte d'un cran toutes les séances `a_venir` qui le suivent pour combler
+ * la place. Le créneau libéré en bout de chaîne récupère la prochaine unité
+ * non placée de la progression si le planning a des séances en excédent
+ * (symétrique de `ajouterSeanceExceptionnelle`), sinon il reste simplement
+ * vide. N'agit que sur un trou `retard` — jamais sur une vraie annulation,
+ * pour garder les deux mécanismes séparés.
+ */
+export async function rattraperRetard(trou: Seance, progressionId: string): Promise<void> {
+  const [seancesPlanning, planning, progressionUnites] = await Promise.all([
+    fetchSeancesPlanning(trou.planning_id),
+    fetchPlanningById(trou.planning_id),
+    fetchProgressionUnites(progressionId),
+  ])
+
+  const suivantes = seancesPlanning
+    .filter((s) => s.statut === 'a_venir')
+    .filter((s) => estApres(s, trou))
+    .sort((a, b) => (a.date === b.date ? a.heure_debut.localeCompare(b.heure_debut) : a.date.localeCompare(b.date)))
+
+  const cibles: CreneauDate[] = [
+    { date: trou.date, heure_debut: trou.heure_debut },
+    ...suivantes.slice(0, -1).map((s) => ({ date: s.date, heure_debut: s.heure_debut })),
+  ]
+  for (let i = 0; i < suivantes.length; i++) {
+    await updateSeance(suivantes[i].id, { date: cibles[i].date, heure_debut: cibles[i].heure_debut })
+  }
+  await deleteSeance(trou.id)
+
+  const creneauLibere = suivantes.length > 0 ? suivantes[suivantes.length - 1] : trou
+  if (planning.nb_seances_en_exces > 0) {
+    const uniteIdsPlacees = new Set(seancesPlanning.filter((s) => s.unite_id).map((s) => s.unite_id))
+    const prochaineUnite = progressionUnites.find((pu) => !uniteIdsPlacees.has(pu.unite_id))
+    if (prochaineUnite) {
+      await insertSeanceExceptionnelle(
+        trou.planning_id,
+        prochaineUnite.unite_id,
+        creneauLibere.date,
+        creneauLibere.heure_debut,
+      )
+      await updateNbSeancesEnExces(planning.id, planning.nb_seances_en_exces - 1)
+    }
   }
 }
 

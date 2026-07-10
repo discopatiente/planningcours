@@ -1,4 +1,4 @@
-export type StatutSeance = 'a_venir' | 'fait' | 'annulee' | 'deplacee'
+export type StatutSeance = 'a_venir' | 'fait' | 'annulee' | 'deplacee' | 'retard'
 
 export interface Seance {
   id: string
@@ -13,6 +13,7 @@ export interface Seance {
   override_instruction_eleves: string | null
   override_delai_impression_jours: number | null
   override_delai_eleves_jours: number | null
+  non_terminee: boolean
 }
 
 export interface SeanceAvecPlanning extends Seance {

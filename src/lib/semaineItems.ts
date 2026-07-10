@@ -5,6 +5,7 @@ import type { Matiere } from '../types/matiere'
 import type { Classe } from '../types/classe'
 import type { Progression } from '../types/progression'
 import type { Ressource } from '../types/ressource'
+import { libelleTrou, titreAvecDebordement } from './titresSeances'
 
 export type ItemJour =
   | { kind: 'seance'; heure: string; data: SeanceAvecPlanning }
@@ -44,21 +45,23 @@ export function matiereDeProgression(
   return progression ? ctx.matieresParId.get(progression.matiere_id) ?? null : null
 }
 
-export function detailsItem(item: ItemJour, ctx: ContexteItemsJour) {
+// `seancesDuPlanning` : toutes les séances déjà chargées par la vue
+// appelante (toutes classes confondues, `trouverSeancePrecedente` filtre par
+// planning) — sert à retrouver la séance précédente pour le titre combiné en
+// cas de débordement. Une vue à fenêtre étroite (ex. la vue du jour) peut ne
+// pas contenir la précédente : le titre combiné n'apparaît alors pas, c'est
+// une dégradation acceptée plutôt qu'une erreur.
+export function detailsItem(item: ItemJour, ctx: ContexteItemsJour, seancesDuPlanning: SeanceAvecPlanning[] = []) {
   const classe = ctx.classesParId.get(item.data.planning.classe_id)
   const matiere = matiereDeProgression(item.data.planning.progression_id, ctx)
   const estEvaluation = item.kind === 'evaluation'
-  const seanceAnnuleeSansUnite =
-    !estEvaluation && item.data.statut === 'annulee' && (item.data as SeanceAvecPlanning).unite_id === null
+  const seance = estEvaluation ? null : (item.data as SeanceAvecPlanning)
+  const estTrou = seance !== null && (seance.statut === 'annulee' || seance.statut === 'retard') && seance.unite_id === null
   const titre = estEvaluation
     ? (item.data as EvaluationAvecPlanning).titre ?? 'Évaluation'
-    : seanceAnnuleeSansUnite
-      ? 'Séance annulée'
-      : (item.data as SeanceAvecPlanning).override_titre ??
-        ctx.unitesParId.get((item.data as SeanceAvecPlanning).unite_id ?? '')?.titre ??
-        '(unité supprimée)'
-  const ressource = !estEvaluation
-    ? ctx.ressourcePrincipaleParUnite.get((item.data as SeanceAvecPlanning).unite_id ?? '')
-    : undefined
+    : estTrou
+      ? libelleTrou(seance!.statut as 'annulee' | 'retard', seance!.motif_annulation)
+      : titreAvecDebordement(seance!, ctx.unitesParId.get(seance!.unite_id ?? ''), seancesDuPlanning, ctx.unitesParId)
+  const ressource = !estEvaluation ? ctx.ressourcePrincipaleParUnite.get(seance!.unite_id ?? '') : undefined
   return { classe, matiere, estEvaluation, titre, ressource }
 }

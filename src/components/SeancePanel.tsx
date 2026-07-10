@@ -12,8 +12,10 @@ interface SeancePanelProps {
   fait: boolean
   estEvaluation: boolean
   estAnnulee: boolean
+  estRetard: boolean
   motifAnnulation: string | null
   notesSeance: string | null
+  nonTerminee: boolean
   ressourceUrl?: string
   presences?: PresenceEleve[]
   rattrapagesDisponibles?: RattrapageDisponible[]
@@ -23,6 +25,9 @@ interface SeancePanelProps {
   onAnnuler: (motif: string | null) => Promise<void>
   onEnregistrerPresences?: (eleveIdsAbsents: string[]) => Promise<void>
   onEnregistrerRattrapages?: (absenceIds: string[]) => Promise<void>
+  onToggleNonTerminee?: (nonTerminee: boolean) => Promise<void>
+  onDecalerRetard?: () => Promise<void>
+  onRattraperRetard?: () => Promise<void>
   onClose: () => void
 }
 
@@ -44,8 +49,10 @@ function SeancePanel({
   fait,
   estEvaluation,
   estAnnulee,
+  estRetard,
   motifAnnulation,
   notesSeance,
+  nonTerminee,
   ressourceUrl,
   presences,
   rattrapagesDisponibles,
@@ -55,6 +62,9 @@ function SeancePanel({
   onAnnuler,
   onEnregistrerPresences,
   onEnregistrerRattrapages,
+  onToggleNonTerminee,
+  onDecalerRetard,
+  onRattraperRetard,
   onClose,
 }: SeancePanelProps) {
   const [notes, setNotes] = useState(notesSeance ?? '')
@@ -64,6 +74,8 @@ function SeancePanel({
   const [deplacing, setDeplacing] = useState(false)
   const [motif, setMotif] = useState('')
   const [annulation, setAnnulation] = useState(false)
+  const [decalage, setDecalage] = useState(false)
+  const [rattrapageRetard, setRattrapageRetard] = useState(false)
   const [presentsCoches, setPresentsCoches] = useState<Record<string, boolean>>(() =>
     Object.fromEntries((presences ?? []).map((p) => [p.eleveId, !p.absent])),
   )
@@ -84,12 +96,52 @@ function SeancePanel({
         <p className="seance-panel-annulee">
           Séance annulée{motifAnnulation ? ` — ${motifAnnulation}` : ''}.
         </p>
+      ) : estRetard ? (
+        <>
+          <p className="seance-panel-annulee">
+            Ce créneau a été laissé vide pour rattraper un retard de progression.
+          </p>
+          {onRattraperRetard && (
+            <div className="modal-field-group">
+              <button
+                type="button"
+                className="btn-sm btn-primary"
+                disabled={rattrapageRetard}
+                onClick={async () => {
+                  setRattrapageRetard(true)
+                  try {
+                    await onRattraperRetard()
+                    onClose()
+                  } finally {
+                    setRattrapageRetard(false)
+                  }
+                }}
+              >
+                Rattraper (avancer la progression)
+              </button>
+              <span className="modal-field-hint">
+                Supprime ce créneau vide et remonte toutes les séances suivantes d'un cran.
+              </span>
+            </div>
+          )}
+        </>
       ) : (
         <>
           <label className="modal-field modal-field-inline">
             <input type="checkbox" checked={fait} onChange={(e) => onToggleFait(e.target.checked)} />
             Marquer comme fait
           </label>
+
+          {!estEvaluation && onToggleNonTerminee && (
+            <label className="modal-field modal-field-inline">
+              <input
+                type="checkbox"
+                checked={nonTerminee}
+                onChange={(e) => onToggleNonTerminee(e.target.checked)}
+              />
+              Séance non terminée (déborde sur la séance suivante)
+            </label>
+          )}
 
           {ressourceUrl && (
             <a href={ressourceUrl} target="_blank" rel="noreferrer" className="modal-field-hint">
@@ -222,6 +274,32 @@ function SeancePanel({
                 </button>
               </div>
               <span className="modal-field-hint">Repositionne cette séance seule, sans décaler les autres.</span>
+            </div>
+          )}
+
+          {!estEvaluation && onDecalerRetard && (
+            <div className="modal-field-group">
+              <span className="modal-field-title">Décaler la progression</span>
+              <button
+                type="button"
+                className="btn-sm"
+                disabled={decalage}
+                onClick={async () => {
+                  setDecalage(true)
+                  try {
+                    await onDecalerRetard()
+                    onClose()
+                  } finally {
+                    setDecalage(false)
+                  }
+                }}
+              >
+                Décaler pour rattraper mon retard
+              </button>
+              <span className="modal-field-hint">
+                À utiliser en cas de retard trop important : ce créneau devient vide et toutes les séances
+                suivantes reculent d'un cran. Réversible depuis le créneau vide créé.
+              </span>
             </div>
           )}
 

@@ -66,7 +66,10 @@ export async function insertSeances(
 export async function updateSeance(
   id: string,
   changes: Partial<
-    Pick<Seance, 'date' | 'heure_debut' | 'statut' | 'motif_annulation' | 'notes_seance' | 'unite_id'>
+    Pick<
+      Seance,
+      'date' | 'heure_debut' | 'statut' | 'motif_annulation' | 'notes_seance' | 'unite_id' | 'non_terminee'
+    >
   >,
 ): Promise<Seance> {
   const { data, error } = await supabase.from('seances').update(changes).eq('id', id).select().single()
@@ -94,6 +97,26 @@ export async function insertSeanceTrouAnnule(
       heure_debut: heureDebut,
       statut: 'annulee' as const,
       motif_annulation: motif,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Trou de « retard de progression » (cf. décalerProgressionRetard) —
+// distinct du trou d'annulation : jamais de motif, statut `retard` plutôt
+// que `annulee`, pour ne pas confondre un choix de rythme avec une vraie
+// annulation.
+export async function insertSeanceTrouRetard(planningId: string, date: string, heureDebut: string): Promise<Seance> {
+  const { data, error } = await supabase
+    .from('seances')
+    .insert({
+      planning_id: planningId,
+      unite_id: null,
+      date,
+      heure_debut: heureDebut,
+      statut: 'retard' as const,
     })
     .select()
     .single()
