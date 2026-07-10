@@ -73,17 +73,6 @@ export function useSemaine(anneeScolaireId: string | null, dateDebut: string, da
     [reload],
   )
 
-  const annulerEvaluation = useCallback(
-    async (id: string) => {
-      try {
-        await updateStatutEvaluation(id, 'annulee')
-      } finally {
-        await reload()
-      }
-    },
-    [reload],
-  )
-
   return {
     seances,
     seancesFenetreAlertes,
@@ -93,6 +82,5 @@ export function useSemaine(anneeScolaireId: string | null, dateDebut: string, da
     reload,
     marquerSeanceFaite,
     marquerEvaluationFaite,
-    annulerEvaluation,
   }
 }

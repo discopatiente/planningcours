@@ -19,7 +19,7 @@ export async function createMatiere(nom: string, couleur: string): Promise<Matie
 
 export async function updateMatiere(
   id: string,
-  changes: Partial<Pick<Matiere, 'nom' | 'couleur'>>,
+  changes: Partial<Pick<Matiere, 'nom' | 'couleur' | 'max_evaluations_exclu'>>,
 ): Promise<Matiere> {
   const { data, error } = await supabase
     .from('matieres')

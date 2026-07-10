@@ -46,6 +46,14 @@ function Matieres() {
                   if (nom && nom !== matiere.nom) edit(matiere.id, { nom })
                 }}
               />
+              <label className="modal-field-inline">
+                <input
+                  type="checkbox"
+                  checked={matiere.max_evaluations_exclu}
+                  onChange={(e) => edit(matiere.id, { max_evaluations_exclu: e.target.checked })}
+                />
+                Hors plafond devoirs/semaine
+              </label>
               <button
                 type="button"
                 className="btn-sm btn-danger"

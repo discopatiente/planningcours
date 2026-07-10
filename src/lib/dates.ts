@@ -18,3 +18,11 @@ export function ajouterJours(date: Date, jours: number): Date {
   copie.setDate(copie.getDate() + jours)
   return copie
 }
+
+// Compare deux créneaux date+heure (chaînes ISO, comparables lexicalement).
+export function estApres(
+  a: { date: string; heure_debut: string },
+  b: { date: string; heure_debut: string },
+): boolean {
+  return a.date > b.date || (a.date === b.date && a.heure_debut > b.heure_debut)
+}

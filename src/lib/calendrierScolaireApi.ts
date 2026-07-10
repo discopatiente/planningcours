@@ -1,3 +1,5 @@
+import { ajouterJours, parseISODate, toISODate } from './dates'
+
 const API_URL =
   'https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records'
 
@@ -59,14 +61,18 @@ function datePariesienne(iso: string): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date(iso))
 }
 
+// Ne jamais utiliser toISOString() ici : elle convertit en UTC et décale la
+// date d'un jour dans les fuseaux en avance sur UTC (Europe/Paris l'été) —
+// cf. le même piège déjà rencontré dans le moteur de projection.
 function veille(dateStr: string): string {
-  const d = new Date(`${dateStr}T00:00:00`)
-  d.setDate(d.getDate() - 1)
-  return d.toISOString().slice(0, 10)
+  return toISODate(ajouterJours(parseISODate(dateStr), -1))
 }
 
 // L'API renvoie des dates bornes exclusives à minuit (heure de Paris) : le
-// retour en classe a lieu le jour de `end_date`, pas la veille.
+// retour en classe a lieu le jour de `end_date`, pas la veille. Certaines
+// périodes d'un seul jour (ponts) ont `start_date` et `end_date` identiques
+// plutôt qu'un lendemain exclusif — dans ce cas `veille()` produirait une
+// date de fin antérieure à la date de début.
 export async function importerPeriodesAcademie(
   academie: string,
   anneeScolaire: string,
@@ -99,11 +105,12 @@ export async function importerPeriodesAcademie(
   }
 
   return [...parPeriode.values()].map((enr) => {
+    const dateDebut = datePariesienne(enr.start_date)
     const finExclusive = datePariesienne(enr.end_date)
     return {
       nom: enr.description,
-      date_debut: datePariesienne(enr.start_date),
-      date_fin: veille(finExclusive),
+      date_debut: dateDebut,
+      date_fin: finExclusive === dateDebut ? dateDebut : veille(finExclusive),
       type: 'vacances' as const,
     }
   })

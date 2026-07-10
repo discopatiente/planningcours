@@ -1,16 +1,26 @@
 import { supabase } from './supabaseClient'
 import type { Evaluation, EvaluationAvecPlanning, StatutEvaluation } from '../types/evaluation'
 
+interface EvaluationAnneeBrute {
+  date: string
+  plannings: { progression_id: string }
+}
+
 // Toutes les évaluations déjà planifiées pour une année scolaire, tous
 // plannings (donc toutes classes) confondus — nécessaire pour faire
 // respecter la règle max_evaluations_semaine « toutes classes confondues ».
-export async function fetchEvaluationsAnnee(anneeScolaireId: string): Promise<{ date: string }[]> {
+// `progression_id` permet à l'appelant de déterminer si la matière de
+// chaque évaluation est exclue du plafond (cf. `matieres.max_evaluations_exclu`).
+export async function fetchEvaluationsAnnee(
+  anneeScolaireId: string,
+): Promise<{ date: string; progression_id: string }[]> {
   const { data, error } = await supabase
     .from('evaluations')
-    .select('date, plannings!inner(annee_scolaire_id)')
+    .select('date, plannings!inner(annee_scolaire_id, progression_id)')
     .eq('plannings.annee_scolaire_id', anneeScolaireId)
+    .returns<EvaluationAnneeBrute[]>()
   if (error) throw error
-  return data
+  return data.map((e) => ({ date: e.date, progression_id: e.plannings.progression_id }))
 }
 
 export async function fetchEvaluationsPlanning(planningId: string): Promise<Evaluation[]> {
@@ -49,6 +59,15 @@ export async function updateStatutEvaluation(id: string, statut: StatutEvaluatio
     .eq('id', id)
     .select()
     .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateEvaluation(
+  id: string,
+  changes: Partial<Pick<Evaluation, 'date' | 'heure_debut'>>,
+): Promise<Evaluation> {
+  const { data, error } = await supabase.from('evaluations').update(changes).eq('id', id).select().single()
   if (error) throw error
   return data
 }

@@ -130,7 +130,7 @@ function SeancePanel({
           )}
 
           <div className="modal-field-group">
-            <span className="modal-field-title">Annuler {estEvaluation ? "l'évaluation" : 'la séance'}</span>
+            <span className="modal-field-title">{estEvaluation ? 'Reporter le devoir' : 'Annuler la séance'}</span>
             {!estEvaluation && (
               <input
                 type="text"
@@ -153,13 +153,13 @@ function SeancePanel({
                 }
               }}
             >
-              Annuler {estEvaluation ? "l'évaluation" : 'la séance'}
+              {estEvaluation ? 'Reporter le devoir' : 'Annuler la séance'}
             </button>
-            {!estEvaluation && (
-              <span className="modal-field-hint">
-                Décale toutes les séances suivantes de ce planning d'un créneau.
-              </span>
-            )}
+            <span className="modal-field-hint">
+              {estEvaluation
+                ? 'Ce créneau devient un cours normal ; les séances suivantes de cette classe remontent chacune d\'un cran, et le devoir se replace automatiquement à une date ultérieure.'
+                : "Décale toutes les séances suivantes de ce planning d'un créneau."}
+            </span>
           </div>
         </>
       )}

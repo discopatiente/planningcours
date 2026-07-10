@@ -13,6 +13,7 @@ import {
   updateSeance,
 } from './seances'
 import { genererDatesCreneaux, type CreneauDate } from './projectionEngine'
+import { estApres } from './dates'
 
 function cleCreneau(date: string, heureDebut: string): string {
   return `${date}|${heureDebut}`
@@ -48,19 +49,16 @@ export async function annulerSeance(
   for (const s of seancesPlanning) occupees.add(cleCreneau(s.date, s.heure_debut))
   for (const e of evaluationsPlanning) occupees.add(cleCreneau(e.date, e.heure_debut))
 
-  const apres = (a: { date: string; heure_debut: string }, b: { date: string; heure_debut: string }) =>
-    a.date > b.date || (a.date === b.date && a.heure_debut > b.heure_debut)
-
   const suivantes = seancesPlanning
     .filter((s) => s.statut === 'a_venir' && s.id !== seance.id)
-    .filter((s) => apres(s, seance))
+    .filter((s) => estApres(s, seance))
     .sort((a, b) => (a.date === b.date ? a.heure_debut.localeCompare(b.heure_debut) : a.date.localeCompare(b.date)))
 
   const chaine = [seance, ...suivantes]
   const cibles: CreneauDate[] = suivantes.map((s) => ({ date: s.date, heure_debut: s.heure_debut }))
 
   const derniereDate = suivantes.length > 0 ? suivantes[suivantes.length - 1] : seance
-  const prochainCreneauLibre = pool.find((d) => apres(d, derniereDate) && !occupees.has(cleCreneau(d.date, d.heure_debut)))
+  const prochainCreneauLibre = pool.find((d) => estApres(d, derniereDate) && !occupees.has(cleCreneau(d.date, d.heure_debut)))
   if (prochainCreneauLibre) cibles.push(prochainCreneauLibre)
 
   let nbEnExcesSupplementaire = 0

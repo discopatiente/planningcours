@@ -7,6 +7,8 @@ import { fetchPeriodesCalendrier } from './periodesCalendrier'
 import { fetchProgressionUnites } from './progressionUnites'
 import { fetchParametres } from './parametres'
 import { fetchEvaluationsAnnee, insertEvaluations } from './evaluations'
+import { fetchProgressions } from './progressions'
+import { fetchMatieres } from './matieres'
 import { insertSeances } from './seances'
 import { projeter } from './projectionEngine'
 
@@ -81,16 +83,27 @@ export async function genererPlanning(
     await deletePlanning(planningExistant.id)
   }
 
-  const [creneauxAnnee, periodes, progressionUnites, parametres, evaluationsExistantes] = await Promise.all([
-    fetchCreneaux(anneeScolaire.id),
-    fetchPeriodesCalendrier(anneeScolaire.id),
-    fetchProgressionUnites(progression.id),
-    fetchParametres(),
-    fetchEvaluationsAnnee(anneeScolaire.id),
-  ])
+  const [creneauxAnnee, periodes, progressionUnites, parametres, evaluationsExistantesBrutes, progressions, matieres] =
+    await Promise.all([
+      fetchCreneaux(anneeScolaire.id),
+      fetchPeriodesCalendrier(anneeScolaire.id),
+      fetchProgressionUnites(progression.id),
+      fetchParametres(),
+      fetchEvaluationsAnnee(anneeScolaire.id),
+      fetchProgressions(),
+      fetchMatieres(),
+    ])
 
   const creneaux = creneauxAnnee.filter((c) => c.classe_id === classeId && c.matiere_id === progression.matiere_id)
   const uniteIds = progressionUnites.map((pu) => pu.unite_id)
+
+  const matiereIdParProgression = new Map(progressions.map((p) => [p.id, p.matiere_id]))
+  const exclusionParMatiere = new Map(matieres.map((m) => [m.id, m.max_evaluations_exclu]))
+  const matiereExclueDuPlafond = exclusionParMatiere.get(progression.matiere_id) ?? false
+  const evaluationsExistantes = evaluationsExistantesBrutes.map((e) => ({
+    date: e.date,
+    matiereExclue: exclusionParMatiere.get(matiereIdParProgression.get(e.progression_id) ?? '') ?? false,
+  }))
 
   const resultat = projeter(
     uniteIds,
@@ -100,6 +113,7 @@ export async function genererPlanning(
     parametres.evaluations_par_trimestre,
     parametres.max_evaluations_semaine,
     evaluationsExistantes,
+    matiereExclueDuPlafond,
   )
 
   const planning = await creerPlanning(classeId, progression.id, anneeScolaire.id, resultat.nbSeancesEnExces)

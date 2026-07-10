@@ -104,8 +104,39 @@ export function bornesTrimestres(anneeScolaire: AnneeScolaire): BorneTrimestre[]
   ]
 }
 
-function cleCreneauDate(d: CreneauDate): string {
+export function cleCreneauDate(d: CreneauDate): string {
   return `${d.date}|${d.heure_debut}`
+}
+
+/**
+ * Cherche, à partir de `indexDepart`, le premier créneau du pool qui n'est
+ * pas réservé. Règle « flexible » : une première passe respecte le plafond
+ * max_evaluations_semaine (ignoré d'emblée si `matiereExclueDuPlafond`,
+ * cf. exclusion SNT) ; si aucun créneau ne le respecte d'ici la fin de
+ * l'année, une seconde passe l'ignore complètement plutôt que de ne pas
+ * placer l'évaluation — le plafond est une préférence, jamais bloquant.
+ */
+export function trouverCreneauEvaluation(
+  datesDisponibles: CreneauDate[],
+  indexDepart: number,
+  reservees: Set<string>,
+  comptageParSemaine: Map<string, number>,
+  maxEvaluationsSemaine: number,
+  matiereExclueDuPlafond: boolean,
+): CreneauDate | null {
+  for (const respecterPlafond of matiereExclueDuPlafond ? [false] : [true, false]) {
+    for (let i = Math.max(indexDepart, 0); i < datesDisponibles.length; i++) {
+      const candidat = datesDisponibles[i]
+      const cle = cleCreneauDate(candidat)
+      if (reservees.has(cle)) continue
+      if (respecterPlafond) {
+        const semaine = toISODate(lundiDeLaSemaine(candidat.date))
+        if ((comptageParSemaine.get(semaine) ?? 0) >= maxEvaluationsSemaine) continue
+      }
+      return candidat
+    }
+  }
+  return null
 }
 
 /**
@@ -113,25 +144,25 @@ function cleCreneauDate(d: CreneauDate): string {
  * disponibles pour la classe, réparties par trimestre. Respecte la règle
  * max_evaluations_semaine toutes classes confondues : si la semaine visée
  * est déjà pleine (comptage `evaluationsExistantes` + celles déjà placées
- * dans cet appel), l'évaluation est décalée au prochain créneau disponible.
- *
- * Simplification volontaire par rapport au brief : les créneaux réservés
- * ici pour les évaluations sont retirés du pool avant la distribution des
- * unités (plutôt que d'insérer l'évaluation dans une distribution déjà
- * complète puis décaler les séances suivantes) — résultat final identique,
- * implémentation plus simple.
+ * dans cet appel), l'évaluation est décalée au prochain créneau disponible
+ * — et si aucun créneau de l'année ne respecte le plafond, il est ignoré
+ * plutôt que de perdre l'évaluation (règle flexible, cf. `trouverCreneauEvaluation`).
+ * Les évaluations d'une matière exclue (`matiereExclueDuPlafond`, ex. SNT) ne
+ * comptent jamais dans le plafond et ne sont jamais bloquées par lui.
  */
 export function placerEvaluations(
   datesDisponibles: CreneauDate[],
   anneeScolaire: AnneeScolaire,
   evaluationsParTrimestre: number,
   maxEvaluationsSemaine: number,
-  evaluationsExistantes: { date: string }[],
+  evaluationsExistantes: { date: string; matiereExclue: boolean }[],
+  matiereExclueDuPlafond: boolean = false,
 ): { date: string; heure_debut: string; trimestre: 1 | 2 | 3 }[] {
   if (evaluationsParTrimestre <= 0) return []
 
   const comptageParSemaine = new Map<string, number>()
   for (const ev of evaluationsExistantes) {
+    if (ev.matiereExclue) continue
     const semaine = toISODate(lundiDeLaSemaine(ev.date))
     comptageParSemaine.set(semaine, (comptageParSemaine.get(semaine) ?? 0) + 1)
   }
@@ -149,25 +180,24 @@ export function placerEvaluations(
         Math.floor(((k + 0.5) * datesTrimestre.length) / evaluationsParTrimestre),
       )
 
-      // Cherche à partir de l'index cible (dans tout le pool restant de
-      // l'année, pas seulement le trimestre) le premier créneau non réservé
-      // dont la semaine n'a pas atteint le plafond.
+      // Cherche à partir de l'index cible, dans tout le pool restant de
+      // l'année (pas seulement le trimestre).
       const indexGlobalDepart = datesDisponibles.indexOf(datesTrimestre[indexCible])
-      let place: CreneauDate | null = null
-      for (let i = indexGlobalDepart; i < datesDisponibles.length; i++) {
-        const candidat = datesDisponibles[i]
-        const cle = cleCreneauDate(candidat)
-        if (reservees.has(cle)) continue
-        const semaine = toISODate(lundiDeLaSemaine(candidat.date))
-        if ((comptageParSemaine.get(semaine) ?? 0) >= maxEvaluationsSemaine) continue
-        place = candidat
-        break
-      }
+      const place = trouverCreneauEvaluation(
+        datesDisponibles,
+        indexGlobalDepart,
+        reservees,
+        comptageParSemaine,
+        maxEvaluationsSemaine,
+        matiereExclueDuPlafond,
+      )
       if (!place) continue
 
       reservees.add(cleCreneauDate(place))
-      const semaine = toISODate(lundiDeLaSemaine(place.date))
-      comptageParSemaine.set(semaine, (comptageParSemaine.get(semaine) ?? 0) + 1)
+      if (!matiereExclueDuPlafond) {
+        const semaine = toISODate(lundiDeLaSemaine(place.date))
+        comptageParSemaine.set(semaine, (comptageParSemaine.get(semaine) ?? 0) + 1)
+      }
       resultat.push({ date: place.date, heure_debut: place.heure_debut, trimestre: borne.trimestre })
     }
   }
@@ -193,7 +223,8 @@ export function projeter(
   periodes: PeriodeCalendrier[],
   evaluationsParTrimestre: number,
   maxEvaluationsSemaine: number,
-  evaluationsExistantes: { date: string }[],
+  evaluationsExistantes: { date: string; matiereExclue: boolean }[],
+  matiereExclueDuPlafond: boolean = false,
 ): ResultatProjection {
   const datesDisponibles = genererDatesCreneaux(creneaux, anneeScolaire, periodes)
   const evaluations = placerEvaluations(
@@ -202,6 +233,7 @@ export function projeter(
     evaluationsParTrimestre,
     maxEvaluationsSemaine,
     evaluationsExistantes,
+    matiereExclueDuPlafond,
   )
   const clesReservees = new Set(evaluations.map((e) => cleCreneauDate(e)))
   const datesPourUnites = datesDisponibles.filter((d) => !clesReservees.has(cleCreneauDate(d)))

@@ -29,7 +29,7 @@ export function useMatieres() {
   }, [])
 
   const edit = useCallback(
-    async (id: string, changes: Partial<Pick<Matiere, 'nom' | 'couleur'>>) => {
+    async (id: string, changes: Partial<Pick<Matiere, 'nom' | 'couleur' | 'max_evaluations_exclu'>>) => {
       const updated = await updateMatiere(id, changes)
       setMatieres((prev) => prev.map((m) => (m.id === id ? updated : m)))
     },
