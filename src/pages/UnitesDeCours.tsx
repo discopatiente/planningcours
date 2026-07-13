@@ -8,6 +8,8 @@ import { useClasses } from '../hooks/useClasses'
 import { useInstancesUnite } from '../hooks/useInstancesUnite'
 import Modal from '../components/Modal'
 import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
+import { importerUnites, parseCsvUnites, type ResultatImportUnites } from '../lib/importUnites'
+import { messageErreur } from '../lib/erreurs'
 import type { Unite } from '../types/unite'
 import type { TypeRessource } from '../types/ressource'
 
@@ -19,7 +21,7 @@ function parseJours(value: string): number | null {
 
 function UnitesDeCours() {
   const { matieres } = useMatieres()
-  const { chapitres, error: erreurChapitres } = useChapitres()
+  const { chapitres, error: erreurChapitres, reload: reloadChapitres } = useChapitres()
   const {
     unites,
     loading: unitesLoading,
@@ -30,6 +32,7 @@ function UnitesDeCours() {
     dupliquer,
     assignerChapitre,
     reorderDansChapitre,
+    reload: reloadUnites,
   } = useUnites()
 
   const [recherche, setRecherche] = useState('')
@@ -45,6 +48,12 @@ function UnitesDeCours() {
   const [nouveauTitreUnite, setNouveauTitreUnite] = useState('')
   const [nouvelleMatiereIdUnite, setNouvelleMatiereIdUnite] = useState('')
   const [nouveauChapitreIdUnite, setNouveauChapitreIdUnite] = useState('')
+
+  const [importOuvert, setImportOuvert] = useState(false)
+  const [fichierImport, setFichierImport] = useState<File | null>(null)
+  const [importEnCours, setImportEnCours] = useState(false)
+  const [erreurImport, setErreurImport] = useState<string | null>(null)
+  const [resultatImport, setResultatImport] = useState<ResultatImportUnites | null>(null)
 
   const [nouvelleRessourceOuverte, setNouvelleRessourceOuverte] = useState(false)
   const [nouveauTypeRessource, setNouveauTypeRessource] = useState<TypeRessource>('support')
@@ -204,6 +213,35 @@ function UnitesDeCours() {
     setUniteSelectionneeId(creee.id)
     setOnglet('contenu')
     setNouvelleUniteOuverte(false)
+  }
+
+  function ouvrirImport() {
+    setFichierImport(null)
+    setErreurImport(null)
+    setResultatImport(null)
+    setImportOuvert(true)
+  }
+
+  async function handleImporterCsv() {
+    if (!fichierImport) return
+    setImportEnCours(true)
+    setErreurImport(null)
+    setResultatImport(null)
+    try {
+      const contenu = await fichierImport.text()
+      const { lignes, erreurEntete } = parseCsvUnites(contenu)
+      if (erreurEntete) {
+        setErreurImport(erreurEntete)
+        return
+      }
+      const resultat = await importerUnites(lignes, matieres, chapitres)
+      setResultatImport(resultat)
+      await Promise.all([reloadUnites(), reloadChapitres()])
+    } catch (err) {
+      setErreurImport(messageErreur(err))
+    } finally {
+      setImportEnCours(false)
+    }
   }
 
   async function handleDupliquer(unite: Unite) {
@@ -375,9 +413,14 @@ function UnitesDeCours() {
               </p>
             )}
 
-            <button type="button" className="btn-sm btn-primary" onClick={ouvrirNouvelleUnite}>
-              Nouvelle unité
-            </button>
+            <div className="udc-list-actions">
+              <button type="button" className="btn-sm btn-primary" onClick={ouvrirNouvelleUnite}>
+                Nouvelle unité
+              </button>
+              <button type="button" className="btn-sm" onClick={ouvrirImport}>
+                Importer CSV
+              </button>
+            </div>
           </div>
 
           {uniteSelectionnee ? (
@@ -817,6 +860,66 @@ function UnitesDeCours() {
               onClick={handleCreerRessource}
             >
               Créer
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {importOuvert && (
+        <Modal title="Importer des unités (CSV)" onClose={() => setImportOuvert(false)}>
+          <p className="section-desc">
+            Une ligne = une unité. Colonnes attendues : Titre, Matière, Chapitre, Lien ressource
+            (facultative — ajoutée comme support de cours). Séparateur point-virgule, première
+            ligne = en-têtes. Une matière inconnue bloque la ligne ; un chapitre inconnu est créé
+            automatiquement dans la matière correspondante.
+          </p>
+          <label className="modal-field">
+            Fichier CSV
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => {
+                setFichierImport(e.target.files?.[0] ?? null)
+                setErreurImport(null)
+                setResultatImport(null)
+              }}
+            />
+          </label>
+          {erreurImport && <p className="error-text">{erreurImport}</p>}
+          {resultatImport && (
+            <div className="section-desc">
+              <p>{resultatImport.unitesCreees} unité(s) créée(s).</p>
+              {resultatImport.chapitresCrees.length > 0 && (
+                <p>Chapitre(s) créé(s) : {resultatImport.chapitresCrees.join(', ')}</p>
+              )}
+              {resultatImport.erreurs.length > 0 && (
+                <>
+                  <p className="error-text">
+                    {resultatImport.erreurs.length} ligne(s) ignorée(s) :
+                  </p>
+                  <ul>
+                    {resultatImport.erreurs.map((e) => (
+                      <li key={e.numeroLigne} className="error-text">
+                        Ligne {e.numeroLigne} : {e.message}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          )}
+          <div className="modal-actions">
+            <div style={{ flex: 1 }} />
+            <button type="button" className="btn-sm" onClick={() => setImportOuvert(false)}>
+              Fermer
+            </button>
+            <button
+              type="button"
+              className="btn-sm btn-primary"
+              disabled={!fichierImport || importEnCours}
+              onClick={handleImporterCsv}
+            >
+              {importEnCours ? 'Import en cours…' : 'Importer'}
             </button>
           </div>
         </Modal>

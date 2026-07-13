@@ -717,6 +717,11 @@ h2 {
 
 /* Pages Chapitres / Unités de cours */
 
+.udc-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .udc-archives-section {
   border: 1px dashed var(--border);
   border-radius: 8px;

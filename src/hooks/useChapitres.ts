@@ -44,5 +44,5 @@ export function useChapitres() {
     setChapitres((prev) => prev.filter((c) => c.id !== id))
   }, [])
 
-  return { chapitres, loading, error, add, edit, remove }
+  return { chapitres, loading, error, reload, add, edit, remove }
 }

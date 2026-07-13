@@ -6,6 +6,7 @@ import {
   fetchProgressions,
   updateProgression,
 } from '../lib/progressions'
+import { messageErreur } from '../lib/erreurs'
 
 export function useProgressions() {
   const [progressions, setProgressions] = useState<Progression[]>([])
@@ -45,9 +46,21 @@ export function useProgressions() {
     [],
   )
 
-  const remove = useCallback(async (id: string) => {
-    await deleteProgression(id)
-    setProgressions((prev) => prev.filter((p) => p.id !== id))
+  const remove = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      await deleteProgression(id)
+      setProgressions((prev) => prev.filter((p) => p.id !== id))
+      setError(null)
+      return true
+    } catch (err) {
+      const message = messageErreur(err)
+      setError(
+        message.includes('violates foreign key constraint')
+          ? "Impossible de supprimer : un planning annuel a déjà été généré à partir de cette progression."
+          : message,
+      )
+      return false
+    }
   }, [])
 
   return { progressions, loading, error, add, edit, remove }

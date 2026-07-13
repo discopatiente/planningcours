@@ -167,8 +167,8 @@ function Progressions() {
   }
 
   async function handleSupprimer(id: string) {
-    await remove(id)
-    if (progressionSelectionneeId === id) setProgressionSelectionneeId(null)
+    const supprimee = await remove(id)
+    if (supprimee && progressionSelectionneeId === id) setProgressionSelectionneeId(null)
   }
 
   async function handleAjouterChapitre() {
