@@ -220,10 +220,12 @@ function Gantt() {
 
   const etiquettesAxe = zoom === 'mois' ? etiquettesSemaines(rangeStart, rangeEnd) : etiquettesMois(rangeStart, rangeEnd)
 
-  const vacances = useMemo(
+  // Vacances et jours fériés partagent la même trame hachurée — les deux
+  // signifient « pas cours », pas besoin de les distinguer entre eux.
+  const periodesAffichees = useMemo(
     () =>
       periodes
-        .filter((p) => p.type === 'vacances' && p.date_fin >= rangeStart && p.date_debut <= rangeEnd)
+        .filter((p) => p.date_fin >= rangeStart && p.date_debut <= rangeEnd)
         .map((p) => {
           const debut = p.date_debut < rangeStart ? rangeStart : p.date_debut
           const fin = p.date_fin > rangeEnd ? rangeEnd : p.date_fin
@@ -341,11 +343,11 @@ function Gantt() {
             </div>
 
             <div className="gantt-body">
-              {vacances.map((v) => (
+              {periodesAffichees.map((p) => (
                 <div
-                  key={v.id}
-                  className="gantt-vacances"
-                  style={{ left: `calc(${LARGEUR_LABEL}px + ${v.leftPct}%)`, width: `${v.widthPct}%` }}
+                  key={p.id}
+                  className="gantt-periode"
+                  style={{ left: `calc(${LARGEUR_LABEL}px + ${p.leftPct}%)`, width: `${p.widthPct}%` }}
                 />
               ))}
               {aujourdhuiVisible && (

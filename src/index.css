@@ -533,9 +533,17 @@ h2 {
   white-space: nowrap;
 }
 
-.periode-badge-ferie {
-  background: rgba(216, 90, 48, 0.15);
-  color: #d85a30;
+/* Vacances et jours fériés partagent la même trame hachurée dans toutes les
+   vues qui affichent le calendrier — pas de distinction visuelle entre les
+   deux types, les deux signifient simplement « pas cours ». */
+.card-row-periode {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.16),
+    rgba(128, 128, 128, 0.16) 4px,
+    transparent 4px,
+    transparent 9px
+  );
 }
 
 .card-row-new {
@@ -1062,6 +1070,16 @@ h2 {
   margin: 0;
 }
 
+.semaine-jour-vacances {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.16),
+    rgba(128, 128, 128, 0.16) 4px,
+    transparent 4px,
+    transparent 9px
+  );
+}
+
 .semaine-item {
   display: flex;
   align-items: center;
@@ -1259,6 +1277,17 @@ h2 {
   background: var(--bg-sidebar);
 }
 
+.cg-cell-vacances {
+  background-color: var(--bg-sidebar);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.16),
+    rgba(128, 128, 128, 0.16) 4px,
+    transparent 4px,
+    transparent 9px
+  );
+}
+
 .cg-evenement {
   display: flex;
   align-items: center;
@@ -1392,7 +1421,7 @@ h2 {
   position: relative;
 }
 
-.gantt-vacances {
+.gantt-periode {
   position: absolute;
   top: 0;
   bottom: 0;

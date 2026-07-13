@@ -7,6 +7,7 @@ import { useUnites } from '../hooks/useUnites'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
 import { usePlannings } from '../hooks/usePlannings'
+import { usePeriodesCalendrier } from '../hooks/usePeriodesCalendrier'
 import { useParametres } from '../hooks/useParametres'
 import { useImpressions } from '../hooks/useImpressions'
 import { useTousEleves } from '../hooks/useTousEleves'
@@ -99,6 +100,7 @@ function Semaine() {
     marquerEvaluationFaite,
   } = useSemaine(anneeActive?.id ?? null, lundi, vendredi)
   const { plannings } = usePlannings(anneeActive?.id ?? null)
+  const { periodes } = usePeriodesCalendrier(anneeActive?.id ?? null)
 
   const [itemSelectionne, setItemSelectionne] = useState<ItemJour | null>(null)
   const [modalExceptionnelleOuvert, setModalExceptionnelleOuvert] = useState(false)
@@ -189,6 +191,17 @@ function Semaine() {
     for (const items of map.values()) items.sort((a, b) => a.heure.localeCompare(b.heure))
     return map
   }, [jours, seances, evaluations])
+
+  // Vacances et jours fériés partagent la même trame hachurée — les deux
+  // signifient « pas cours », pas besoin de les distinguer entre eux.
+  const periodeParJour = useMemo(() => {
+    const map = new Map<string, (typeof periodes)[number]>()
+    for (const jour of jours) {
+      const periode = periodes.find((p) => p.date_debut <= jour && jour <= p.date_fin)
+      if (periode) map.set(jour, periode)
+    }
+    return map
+  }, [jours, periodes])
 
   function toggleFait(item: ItemJour, fait: boolean) {
     if (item.kind === 'evaluation') marquerEvaluationFaite(item.data.id, fait)
@@ -344,13 +357,17 @@ function Semaine() {
               instructions={alertesInstructions}
             />
             <div className="semaine-jours">
-            {jours.map((jour, index) => (
-              <div className="semaine-jour" key={jour}>
+            {jours.map((jour, index) => {
+              const periode = periodeParJour.get(jour)
+              return (
+              <div className={`semaine-jour${periode ? ' semaine-jour-vacances' : ''}`} key={jour}>
                 <div className={`semaine-jour-header${jour === aujourdhui ? ' aujourdhui' : ''}`}>
                   {NOMS_JOURS[index]} <span className="semaine-jour-date">{formatJour(jour)}</span>
                 </div>
 
-                {itemsParJour.get(jour)?.length === 0 && <p className="semaine-jour-vide">Aucun cours</p>}
+                {itemsParJour.get(jour)?.length === 0 && (
+                  <p className="semaine-jour-vide">{periode ? periode.nom : 'Aucun cours'}</p>
+                )}
 
                 {itemsParJour.get(jour)?.map((item) => {
                   const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems, seances)
@@ -399,7 +416,8 @@ function Semaine() {
                   )
                 })}
               </div>
-            ))}
+              )
+            })}
             </div>
           </div>
         ) : (
@@ -413,7 +431,9 @@ function Semaine() {
               <div className="cg-cell cg-entete" />
               {jours.map((jour, index) => (
                 <div
-                  className={`cg-cell cg-entete${jour === aujourdhui ? ' aujourdhui' : ''}`}
+                  className={`cg-cell cg-entete${jour === aujourdhui ? ' aujourdhui' : ''}${
+                    periodeParJour.has(jour) ? ' cg-cell-vacances' : ''
+                  }`}
                   key={jour}
                 >
                   {NOMS_JOURS[index].slice(0, 3)} <span className="semaine-jour-date">{formatJour(jour)}</span>
@@ -431,8 +451,12 @@ function Semaine() {
                     )
                     const jourVide = itemsParJour.get(jour)?.length === 0
                     const passee = jour < aujourdhui
+                    const enPeriode = periodeParJour.has(jour)
                     return (
-                      <div className={`cg-cell${jourVide ? ' cg-cell-vide' : ''}`} key={`${jour}-${heure}`}>
+                      <div
+                        className={`cg-cell${jourVide ? ' cg-cell-vide' : ''}${enPeriode ? ' cg-cell-vacances' : ''}`}
+                        key={`${jour}-${heure}`}
+                      >
                         {items.map((item) => {
                           const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems, seances)
                           return (

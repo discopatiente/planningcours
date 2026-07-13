@@ -108,7 +108,7 @@ function Calendrier() {
           {!loading && (
             <div className="card">
               {periodes.map((periode) => (
-                <div className="card-row" key={periode.id}>
+                <div className="card-row card-row-periode" key={periode.id}>
                   <input
                     type="text"
                     className="input-sm card-row-label"
@@ -146,9 +146,7 @@ function Calendrier() {
                     <option value="vacances">Vacances</option>
                     <option value="ferie">Férié</option>
                   </select>
-                  <span
-                    className={`periode-badge${periode.type === 'ferie' ? ' periode-badge-ferie' : ''}`}
-                  >
+                  <span className="periode-badge">
                     {formatDate(periode.date_debut)} → {formatDate(periode.date_fin)}
                   </span>
                   <button
