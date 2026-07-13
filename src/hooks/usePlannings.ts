@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Planning } from '../types/planning'
 import type { AnneeScolaire } from '../types/anneeScolaire'
 import type { Progression } from '../types/progression'
-import { fetchPlanningsAnnee, genererPlanning, type ResultatGeneration } from '../lib/plannings'
+import {
+  deletePlanning,
+  fetchPlanningsAnnee,
+  genererPlanning,
+  type ResultatGeneration,
+} from '../lib/plannings'
 
 export function usePlannings(anneeScolaireId: string | null) {
   const [plannings, setPlannings] = useState<Planning[]>([])
@@ -41,5 +46,13 @@ export function usePlannings(anneeScolaireId: string | null) {
     [plannings, reload],
   )
 
-  return { plannings, loading, error, generer }
+  const decharger = useCallback(
+    async (id: string): Promise<void> => {
+      await deletePlanning(id)
+      await reload()
+    },
+    [reload],
+  )
+
+  return { plannings, loading, error, generer, decharger }
 }

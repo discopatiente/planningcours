@@ -49,8 +49,10 @@ function Progressions() {
     plannings,
     error: erreurPlannings,
     generer: genererPlanningPourClasse,
+    decharger: dechargerPlanningPourClasse,
   } = usePlannings(anneeActive?.id ?? null)
   const [generationEnCours, setGenerationEnCours] = useState<string | null>(null)
+  const [dechargementEnCours, setDechargementEnCours] = useState<string | null>(null)
   const [resultatsGeneration, setResultatsGeneration] = useState<
     Record<string, { nbSeances: number; nbEvaluations: number; nbSeancesEnExces: number }>
   >({})
@@ -81,6 +83,22 @@ function Progressions() {
       setErreurAjout(err instanceof Error ? err.message : String(err))
     } finally {
       setGenerationEnCours(null)
+    }
+  }
+
+  async function handleDechargerPlanning(planningId: string, classeId: string) {
+    setDechargementEnCours(classeId)
+    setErreurAjout(null)
+    try {
+      await dechargerPlanningPourClasse(planningId)
+      setResultatsGeneration((prev) => {
+        const { [classeId]: _retire, ...reste } = prev
+        return reste
+      })
+    } catch (err) {
+      setErreurAjout(err instanceof Error ? err.message : String(err))
+    } finally {
+      setDechargementEnCours(null)
     }
   }
 
@@ -408,6 +426,10 @@ function Progressions() {
               <h3 className="section-title" style={{ marginTop: '1.5rem' }}>
                 Plannings {anneeActive ? `— ${anneeActive.libelle}` : ''}
               </h3>
+              <p className="section-desc" style={{ margin: '0 0 0.5rem' }}>
+                Décharger un planning supprime ses séances et évaluations de l'année pour cette
+                classe (y compris celles déjà faites, notées ou imprimées) — irréversible.
+              </p>
               {erreurPlannings && <p className="error-text">{erreurPlannings}</p>}
               {!anneeActive ? (
                 <p className="section-desc" style={{ margin: 0 }}>
@@ -453,7 +475,7 @@ function Progressions() {
                         <button
                           type="button"
                           className="btn-sm btn-primary"
-                          disabled={generationEnCours === classe.id}
+                          disabled={generationEnCours === classe.id || dechargementEnCours === classe.id}
                           onClick={() => handleGenererPlanning(classe.id)}
                         >
                           {generationEnCours === classe.id
@@ -462,6 +484,16 @@ function Progressions() {
                               ? 'Régénérer'
                               : 'Générer'}
                         </button>
+                        {planningExistant && (
+                          <button
+                            type="button"
+                            className="btn-sm btn-danger"
+                            disabled={generationEnCours === classe.id || dechargementEnCours === classe.id}
+                            onClick={() => handleDechargerPlanning(planningExistant.id, classe.id)}
+                          >
+                            {dechargementEnCours === classe.id ? 'Déchargement…' : 'Décharger'}
+                          </button>
+                        )}
                       </div>
                     )
                   })}

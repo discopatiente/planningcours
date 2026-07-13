@@ -728,40 +728,103 @@ h2 {
   overflow: hidden;
 }
 
-.udc-chapitre-label {
-  padding: 8px 12px 4px;
+.udc-table-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.udc-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.udc-table-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.udc-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.udc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.udc-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg-sidebar);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  opacity: 0.55;
+  opacity: 0.65;
+  border-bottom: 1px solid var(--border);
 }
 
-.udc-unite-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 8px 4px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  font-size: 13px;
-  cursor: grab;
+.udc-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
 }
 
-.udc-unite-item.selected {
-  border-color: var(--accent);
+.udc-table-row {
+  cursor: pointer;
+}
+
+.udc-table-row:hover {
+  background: var(--accent-bg);
+}
+
+.udc-table-row.expanded {
+  background: var(--accent-bg);
   color: var(--accent);
+  font-weight: 500;
 }
 
-.udc-unite-item.dragging {
+.udc-table-row.dragging {
   opacity: 0.4;
 }
 
-.udc-unite-item.drag-over {
-  border-color: var(--accent);
-  border-style: dashed;
+.udc-table-row.drag-over td {
+  border-top: 2px dashed var(--accent);
+}
+
+.udc-table-titre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.udc-table-chevron {
+  opacity: 0.6;
+  width: 12px;
+  display: inline-block;
+}
+
+.udc-table-detail-row td {
+  padding: 0;
+  border-bottom: 2px solid var(--accent);
+}
+
+.udc-table-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 20px 20px;
+  background: var(--bg-sidebar);
+  cursor: default;
 }
 
 .udc-tabs {
