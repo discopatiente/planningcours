@@ -1421,6 +1421,20 @@ h2 {
   position: relative;
 }
 
+/* Les pourcentages de .gantt-periode / .gantt-aujourdhui-ligne doivent se
+   résoudre par rapport à la largeur de la frise seule (hors colonne des
+   libellés à gauche), comme le fait déjà la grille CSS des séances — sans ce
+   conteneur intermédiaire ils se résolvaient par rapport à .gantt-body en
+   entier (libellés + frise), ce qui décalait et étirait les bandes vers la
+   droite par rapport aux blocs de séances/évaluations qu'elles sont censées
+   recouvrir. */
+.gantt-body-timeline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
 .gantt-periode {
   position: absolute;
   top: 0;

@@ -343,16 +343,18 @@ function Gantt() {
             </div>
 
             <div className="gantt-body">
-              {periodesAffichees.map((p) => (
-                <div
-                  key={p.id}
-                  className="gantt-periode"
-                  style={{ left: `calc(${LARGEUR_LABEL}px + ${p.leftPct}%)`, width: `${p.widthPct}%` }}
-                />
-              ))}
-              {aujourdhuiVisible && (
-                <div className="gantt-aujourdhui-ligne" style={{ left: `calc(${LARGEUR_LABEL}px + ${aujourdhuiPct}%)` }} />
-              )}
+              <div className="gantt-body-timeline" style={{ left: LARGEUR_LABEL }}>
+                {periodesAffichees.map((p) => (
+                  <div
+                    key={p.id}
+                    className="gantt-periode"
+                    style={{ left: `${p.leftPct}%`, width: `${p.widthPct}%` }}
+                  />
+                ))}
+                {aujourdhuiVisible && (
+                  <div className="gantt-aujourdhui-ligne" style={{ left: `${aujourdhuiPct}%` }} />
+                )}
+              </div>
 
               {lignes.map((ligne) => {
                 const groupeChange = mode === 'matiere' && ligne.groupe !== dernierGroupe
