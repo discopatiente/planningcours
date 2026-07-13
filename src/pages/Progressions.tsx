@@ -29,6 +29,7 @@ function Progressions() {
   const [erreurAjout, setErreurAjout] = useState<string | null>(null)
   const [indexDrag, setIndexDrag] = useState<number | null>(null)
   const [indexSurvol, setIndexSurvol] = useState<number | null>(null)
+  const [groupesDeplies, setGroupesDeplies] = useState<Set<string>>(new Set())
 
   const progressionSelectionnee =
     progressions.find((p) => p.id === progressionSelectionneeId) ?? null
@@ -114,6 +115,48 @@ function Progressions() {
   )
 
   const dejaAjoutees = useMemo(() => new Set(items.map((i) => i.unite_id)), [items])
+
+  // Regroupe les unités déjà dans la progression sous leur chapitre pour
+  // l'affichage — par tranches contiguës selon l'ordre réel de la
+  // progression (celui utilisé par le moteur de projection), jamais par un
+  // tri global qui le trahirait. Deux passages non contigus par le même
+  // chapitre (déplacement manuel) donnent donc deux groupes distincts.
+  const groupesItems = useMemo(() => {
+    const groupes: {
+      cle: string
+      chapitreId: string | null
+      chapitreNom: string
+      entrees: { item: (typeof items)[number]; index: number }[]
+    }[] = []
+    items.forEach((item, index) => {
+      const chapitreId = item.unite.chapitre?.id ?? null
+      const dernier = groupes[groupes.length - 1]
+      if (dernier && dernier.chapitreId === chapitreId) {
+        dernier.entrees.push({ item, index })
+      } else {
+        groupes.push({
+          cle: `${chapitreId ?? 'sans-chapitre'}#${index}`,
+          chapitreId,
+          chapitreNom: item.unite.chapitre?.nom ?? 'Sans chapitre',
+          entrees: [{ item, index }],
+        })
+      }
+    })
+    return groupes
+  }, [items])
+
+  useEffect(() => {
+    setGroupesDeplies(new Set())
+  }, [progressionSelectionneeId])
+
+  function toggleGroupe(cle: string) {
+    setGroupesDeplies((prev) => {
+      const next = new Set(prev)
+      if (next.has(cle)) next.delete(cle)
+      else next.add(cle)
+      return next
+    })
+  }
 
   // Unités de la matière de la progression, non encore présentes, regroupées
   // par chapitre et triées selon la trame par défaut (les unités sans
@@ -318,41 +361,53 @@ function Progressions() {
                 </button>
               </div>
 
-              {items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`progression-unite-item${indexDrag === index ? ' dragging' : ''}${
-                    indexSurvol === index ? ' drag-over' : ''
-                  }`}
-                  draggable
-                  onDragStart={() => setIndexDrag(index)}
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    setIndexSurvol(index)
-                  }}
-                  onDrop={() => handleDrop(index)}
-                  onDragEnd={() => {
-                    setIndexDrag(null)
-                    setIndexSurvol(null)
-                  }}
-                >
-                  <span className="progression-unite-handle">⋮⋮</span>
-                  <span className="progression-unite-position">{index + 1}.</span>
-                  <span style={{ flex: 1 }}>
-                    {item.unite.titre}
-                    <span className="progression-unite-chapitre">
-                      {item.unite.chapitre?.nom ?? 'sans chapitre'}
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    className="btn-sm btn-danger"
-                    onClick={() => retirerUnite(item.id)}
-                  >
-                    Retirer
-                  </button>
-                </div>
-              ))}
+              {groupesItems.map((groupe) => {
+                const deplie = groupesDeplies.has(groupe.cle)
+                return (
+                  <div className="referentiel-group" key={groupe.cle}>
+                    <button
+                      type="button"
+                      className="referentiel-group-header"
+                      onClick={() => toggleGroupe(groupe.cle)}
+                    >
+                      {groupe.chapitreNom}
+                      <span className="referentiel-group-count">{groupe.entrees.length}</span>
+                      <span>{deplie ? '▾' : '▸'}</span>
+                    </button>
+                    {deplie &&
+                      groupe.entrees.map(({ item, index }) => (
+                        <div
+                          key={item.id}
+                          className={`progression-unite-item${indexDrag === index ? ' dragging' : ''}${
+                            indexSurvol === index ? ' drag-over' : ''
+                          }`}
+                          draggable
+                          onDragStart={() => setIndexDrag(index)}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setIndexSurvol(index)
+                          }}
+                          onDrop={() => handleDrop(index)}
+                          onDragEnd={() => {
+                            setIndexDrag(null)
+                            setIndexSurvol(null)
+                          }}
+                        >
+                          <span className="progression-unite-handle">⋮⋮</span>
+                          <span className="progression-unite-position">{index + 1}.</span>
+                          <span style={{ flex: 1 }}>{item.unite.titre}</span>
+                          <button
+                            type="button"
+                            className="btn-sm btn-danger"
+                            onClick={() => retirerUnite(item.id)}
+                          >
+                            Retirer
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                )
+              })}
 
               {items.length === 0 && (
                 <p className="section-desc" style={{ margin: 0 }}>
