@@ -8,6 +8,7 @@ import Jour from './pages/Jour'
 import Semaine from './pages/Semaine'
 import Impressions from './pages/Impressions'
 import Gantt from './pages/Gantt'
+import Frise from './pages/Frise'
 import Chapitres from './pages/Chapitres'
 import UnitesDeCours from './pages/UnitesDeCours'
 import Progressions from './pages/Progressions'
@@ -49,6 +50,7 @@ function AppRoutes() {
           <Route path="/semaine" element={<Semaine />} />
           <Route path="/impressions" element={<Impressions />} />
           <Route path="/gantt" element={<Gantt />} />
+          <Route path="/frise" element={<Frise />} />
           <Route path="/chapitres" element={<Chapitres />} />
           <Route path="/unites-de-cours" element={<UnitesDeCours />} />
           <Route path="/progressions" element={<Progressions />} />

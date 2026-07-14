@@ -1558,6 +1558,173 @@ h2 {
   z-index: 2;
 }
 
+/* Frise des évaluations */
+
+.frise-legende {
+  display: flex;
+  gap: 18px;
+  margin: 4px 0 16px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.frise-legende-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.frise-legende-point {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.frise-legende-hachure {
+  width: 16px;
+  height: 10px;
+  flex-shrink: 0;
+  background-color: var(--bg-sidebar);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.35),
+    rgba(128, 128, 128, 0.35) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  border: 1px solid var(--border);
+}
+
+.frise-legende-trait {
+  width: 2px;
+  height: 12px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.frise-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.frise-row {
+  display: grid;
+  border-bottom: 1px solid var(--border);
+  min-height: 40px;
+}
+
+.frise-row:last-child {
+  border-bottom: none;
+}
+
+.frise-row-label {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border-right: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.frise-row-timeline {
+  position: relative;
+}
+
+.frise-repere {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  z-index: 1;
+}
+
+.frise-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: var(--bg-sidebar);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(128, 128, 128, 0.16),
+    rgba(128, 128, 128, 0.16) 4px,
+    transparent 4px,
+    transparent 9px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.frise-marqueur {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  z-index: 2;
+}
+
+.frise-marqueur-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.frise-aujourdhui {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e5484d;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.frise-point {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: default;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frise-point-passee {
+  opacity: 0.45;
+}
+
+.frise-point-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  border-radius: 7px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  color: var(--text);
+}
+
 .export-toolbar {
   display: flex;
   align-items: flex-end;
