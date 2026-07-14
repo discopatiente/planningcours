@@ -5,6 +5,7 @@ import { useClasses } from '../hooks/useClasses'
 import { useMatieres } from '../hooks/useMatieres'
 import { useProgressions } from '../hooks/useProgressions'
 import { useUnites } from '../hooks/useUnites'
+import { useChapitres } from '../hooks/useChapitres'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
 import { useImpressions } from '../hooks/useImpressions'
@@ -32,6 +33,7 @@ function Jour() {
   const { matieres } = useMatieres()
   const { progressions } = useProgressions()
   const { unites } = useUnites()
+  const { chapitres } = useChapitres()
   const { ressources } = useRessourcesToutes()
   const { etats: etatsImpressions, getEtat, setEtat } = useImpressions()
 
@@ -45,12 +47,13 @@ function Jour() {
   const progressionsParId = useMemo(() => new Map(progressions.map((p) => [p.id, p])), [progressions])
   const matieresParId = useMemo(() => new Map(matieres.map((m) => [m.id, m])), [matieres])
   const unitesParId = useMemo(() => new Map(unites.map((u) => [u.id, u])), [unites])
+  const chapitresParId = useMemo(() => new Map(chapitres.map((c) => [c.id, c])), [chapitres])
   const ressourcePrincipaleParUnite = useMemo(() => construireRessourcePrincipaleParUnite(ressources), [ressources])
   const ressourcesImprimablesParUnite = useMemo(() => construireRessourcesImprimablesParUnite(ressources), [ressources])
 
   const ctxItems = useMemo(
-    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, ressourcePrincipaleParUnite }),
-    [classesParId, progressionsParId, matieresParId, unitesParId, ressourcePrincipaleParUnite],
+    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite }),
+    [classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite],
   )
 
   // Bornes = le jour affiché des deux côtés : les fonctions d'alerte

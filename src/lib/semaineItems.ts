@@ -1,6 +1,7 @@
 import type { SeanceAvecPlanning } from '../types/seance'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
 import type { Unite } from '../types/unite'
+import type { Chapitre } from '../types/chapitre'
 import type { Matiere } from '../types/matiere'
 import type { Classe } from '../types/classe'
 import type { Progression } from '../types/progression'
@@ -16,6 +17,7 @@ export interface ContexteItemsJour {
   progressionsParId: Map<string, Progression>
   matieresParId: Map<string, Matiere>
   unitesParId: Map<string, Unite>
+  chapitresParId: Map<string, Chapitre>
   ressourcePrincipaleParUnite: Map<string, Ressource>
 }
 
@@ -63,5 +65,8 @@ export function detailsItem(item: ItemJour, ctx: ContexteItemsJour, seancesDuPla
       ? libelleTrou(seance!.motif_annulation)
       : titreAvecDebordement(seance!, ctx.unitesParId.get(seance!.unite_id ?? ''), seancesDuPlanning, ctx.unitesParId)
   const ressource = !estEvaluation ? ctx.ressourcePrincipaleParUnite.get(seance!.unite_id ?? '') : undefined
-  return { classe, matiere, estEvaluation, titre, ressource }
+  const unite = !estEvaluation && !estTrou ? ctx.unitesParId.get(seance!.unite_id ?? '') : undefined
+  const chapitre = unite?.chapitre_id ? ctx.chapitresParId.get(unite.chapitre_id) : undefined
+  const titreChapitre = chapitre ? chapitre.titre_court || chapitre.nom : undefined
+  return { classe, matiere, estEvaluation, titre, ressource, titreChapitre }
 }

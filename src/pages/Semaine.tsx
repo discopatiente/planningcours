@@ -4,6 +4,7 @@ import { useClasses } from '../hooks/useClasses'
 import { useMatieres } from '../hooks/useMatieres'
 import { useProgressions } from '../hooks/useProgressions'
 import { useUnites } from '../hooks/useUnites'
+import { useChapitres } from '../hooks/useChapitres'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
 import { usePlannings } from '../hooks/usePlannings'
@@ -39,7 +40,7 @@ const NOMS_JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 // du temps (Paramètres), pour rester cohérent avec les créneaux qu'on peut y
 // créer.
 const HEURES_GRILLE = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
-const HAUTEUR_LIGNE = 56
+const HAUTEUR_LIGNE = 70
 const HAUTEUR_ENTETE = 44
 
 function formatJour(dateStr: string) {
@@ -61,6 +62,7 @@ function Semaine() {
   const { matieres } = useMatieres()
   const { progressions } = useProgressions()
   const { unites } = useUnites()
+  const { chapitres } = useChapitres()
   const { ressources } = useRessourcesToutes()
   const { parametres } = useParametres()
   const { etats: etatsImpressions } = useImpressions()
@@ -109,12 +111,13 @@ function Semaine() {
   const progressionsParId = useMemo(() => new Map(progressions.map((p) => [p.id, p])), [progressions])
   const matieresParId = useMemo(() => new Map(matieres.map((m) => [m.id, m])), [matieres])
   const unitesParId = useMemo(() => new Map(unites.map((u) => [u.id, u])), [unites])
+  const chapitresParId = useMemo(() => new Map(chapitres.map((c) => [c.id, c])), [chapitres])
 
   const ressourcePrincipaleParUnite = useMemo(() => construireRessourcePrincipaleParUnite(ressources), [ressources])
 
   const ctxItems = useMemo(
-    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, ressourcePrincipaleParUnite }),
-    [classesParId, progressionsParId, matieresParId, unitesParId, ressourcePrincipaleParUnite],
+    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite }),
+    [classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite],
   )
 
   const ressourcesImprimablesParUnite = useMemo(() => construireRessourcesImprimablesParUnite(ressources), [ressources])
@@ -370,7 +373,7 @@ function Semaine() {
                 )}
 
                 {itemsParJour.get(jour)?.map((item) => {
-                  const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems, seances)
+                  const { classe, matiere, estEvaluation, titre, ressource, titreChapitre } = detailsItem(item, ctxItems, seances)
                   const passee = jour < aujourdhui
 
                   return (
@@ -383,6 +386,7 @@ function Semaine() {
                       <span className="referentiel-group-dot" style={{ background: matiere?.couleur ?? '#999' }} />
                       <span className="semaine-item-corps">
                         <span className="semaine-item-titre">{titre}</span>
+                        {titreChapitre && <span className="semaine-item-chapitre">{titreChapitre}</span>}
                         <span className="semaine-item-classe">
                           {classe?.nom ?? '?'} — {matiere?.nom ?? '?'}
                         </span>
@@ -458,7 +462,7 @@ function Semaine() {
                         key={`${jour}-${heure}`}
                       >
                         {items.map((item) => {
-                          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(item, ctxItems, seances)
+                          const { classe, matiere, estEvaluation, titre, ressource, titreChapitre } = detailsItem(item, ctxItems, seances)
                           return (
                             <div
                               key={item.data.id}
@@ -467,6 +471,7 @@ function Semaine() {
                               onClick={() => setItemSelectionne(item)}
                             >
                               <span className="cg-evenement-titre">{titre}</span>
+                              {titreChapitre && <span className="cg-evenement-chapitre">{titreChapitre}</span>}
                               <span className="cg-evenement-footer">
                                 <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
                                 {item.data.statut !== 'annulee' && (

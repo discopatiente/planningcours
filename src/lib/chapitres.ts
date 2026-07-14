@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient'
 import type { Chapitre } from '../types/chapitre'
 
-type ChampsModifiables = Partial<Pick<Chapitre, 'nom' | 'matiere_id' | 'archive'>>
+type ChampsModifiables = Partial<Pick<Chapitre, 'nom' | 'titre_court' | 'matiere_id' | 'archive'>>
 
 export async function fetchChapitres(): Promise<Chapitre[]> {
   const { data, error } = await supabase.from('chapitres').select('*').order('nom')

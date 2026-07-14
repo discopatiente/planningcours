@@ -196,6 +196,21 @@ function Chapitres() {
             </label>
 
             <label className="modal-field">
+              Titre court
+              <input
+                type="text"
+                defaultValue={chapitreSelectionne.titre_court ?? ''}
+                placeholder="Affiché sous le titre de l'unité en vue Semaine"
+                onBlur={(e) => {
+                  const titreCourt = e.target.value.trim()
+                  if (titreCourt !== (chapitreSelectionne.titre_court ?? '')) {
+                    edit(chapitreSelectionne.id, { titre_court: titreCourt || null })
+                  }
+                }}
+              />
+            </label>
+
+            <label className="modal-field">
               Matière
               <input type="text" value={matiereDuChapitreSelectionne?.nom ?? ''} disabled />
             </label>
