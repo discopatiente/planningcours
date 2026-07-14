@@ -40,7 +40,7 @@ const NOMS_JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 // créer.
 const HEURES_GRILLE = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 const HAUTEUR_LIGNE = 56
-const HAUTEUR_ENTETE = 32
+const HAUTEUR_ENTETE = 44
 
 function formatJour(dateStr: string) {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
