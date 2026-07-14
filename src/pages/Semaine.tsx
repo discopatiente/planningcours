@@ -467,32 +467,34 @@ function Semaine() {
                               onClick={() => setItemSelectionne(item)}
                             >
                               <span className="cg-evenement-titre">{titre}</span>
-                              <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
-                              {item.data.statut !== 'annulee' && (
-                                <input
-                                  type="checkbox"
-                                  checked={item.data.statut === 'fait'}
-                                  onChange={(e) => toggleFait(item, e.target.checked)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  title="Fait"
-                                />
-                              )}
-                              {ressource && (
-                                <a
-                                  href={ressource.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  title="Ouvrir la ressource"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  ↗
-                                </a>
-                              )}
-                              {!estEvaluation && seancesAvecRattrapageSet.has(item.data.id) && (
-                                <span className="badge-rattrapage" title="Rattrapage de devoir prévu pendant ce cours">
-                                  ↻
-                                </span>
-                              )}
+                              <span className="cg-evenement-footer">
+                                <span className="cg-evenement-classe">{classe?.nom ?? '?'}</span>
+                                {item.data.statut !== 'annulee' && (
+                                  <input
+                                    type="checkbox"
+                                    checked={item.data.statut === 'fait'}
+                                    onChange={(e) => toggleFait(item, e.target.checked)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Fait"
+                                  />
+                                )}
+                                {ressource && (
+                                  <a
+                                    href={ressource.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title="Ouvrir la ressource"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    ↗
+                                  </a>
+                                )}
+                                {!estEvaluation && seancesAvecRattrapageSet.has(item.data.id) && (
+                                  <span className="badge-rattrapage" title="Rattrapage de devoir prévu pendant ce cours">
+                                    ↻
+                                  </span>
+                                )}
+                              </span>
                             </div>
                           )
                         })}

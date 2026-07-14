@@ -1237,6 +1237,9 @@ h2 {
   padding: 2px 4px;
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .cg-cell:nth-child(6n) {
@@ -1284,13 +1287,15 @@ h2 {
 
 .cg-evenement {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  min-height: 0;
   background: rgba(128, 128, 128, 0.14);
   border-left: 3px solid #999;
   border-radius: 4px;
-  padding: 2px 4px;
-  margin-bottom: 2px;
+  padding: 3px 5px;
   font-size: 11px;
   cursor: pointer;
 }
@@ -1300,17 +1305,25 @@ h2 {
 }
 
 .cg-evenement-titre {
-  flex: 1;
-  min-width: 0;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+}
+
+.cg-evenement-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .cg-evenement-classe {
   opacity: 0.7;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cg-evenement input[type='checkbox'] {
