@@ -11,17 +11,16 @@ import {
   construireMarqueursTrimestre,
   construirePointsFrise,
   construireZonesFrise,
-  pctAujourdhuiDansLigne,
-  pctJour,
+  jourAujourdhuiDansLigne,
 } from '../lib/frise'
-import { toISODate, parseISODate } from '../lib/dates'
+import { toISODate } from '../lib/dates'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
 
 const COULEUR_EVALUATION = '#D85A30'
 const LARGEUR_LABEL = 140
-// Jours de repère affichés en pointillé léger dans chaque ligne, pour situer
-// les évaluations sans avoir à compter les colonnes.
-const JOURS_REPERE = [8, 15, 22, 29]
+const JOURS_MOIS_MAX = 31
+const NUMEROS_JOURS = Array.from({ length: JOURS_MOIS_MAX }, (_, i) => i + 1)
+const COLONNES_GRILLE = `${LARGEUR_LABEL}px repeat(${JOURS_MOIS_MAX}, minmax(0, 1fr))`
 
 function libellePoint(evaluations: EvaluationAvecPlanning[], resoudre: (e: EvaluationAvecPlanning) => string) {
   return evaluations.map(resoudre).join(', ')
@@ -84,48 +83,58 @@ function Frise() {
       ) : (
         !loading && (
           <div className="frise-wrapper">
+            <div className="frise-header" style={{ gridTemplateColumns: COLONNES_GRILLE }}>
+              <div className="frise-header-corner" />
+              {NUMEROS_JOURS.map((jour) => (
+                <div key={jour} className="frise-header-jour">
+                  {jour}
+                </div>
+              ))}
+            </div>
+
             {lignes.map((ligne) => {
               const zones = construireZonesFrise(periodes, ligne)
               const marqueurs = construireMarqueursTrimestre(bornes, ligne)
               const points = construirePointsFrise(evaluations, ligne, aujourdhui)
-              const aujourdhuiPct = pctAujourdhuiDansLigne(aujourdhui, ligne)
+              const jourAujourdhui = jourAujourdhuiDansLigne(aujourdhui, ligne)
+              const joursDeLigne = Array.from(
+                { length: ligne.jourFin - ligne.jourDebut + 1 },
+                (_, i) => ligne.jourDebut + i,
+              )
               return (
-                <div className="frise-row" key={ligne.id} style={{ gridTemplateColumns: `${LARGEUR_LABEL}px 1fr` }}>
+                <div className="frise-row" key={ligne.id} style={{ gridTemplateColumns: COLONNES_GRILLE }}>
                   <div className="frise-row-label">{ligne.label}</div>
-                  <div className="frise-row-timeline">
-                    {JOURS_REPERE.map((j) => (
-                      <div key={j} className="frise-repere" style={{ left: `${pctJour(j)}%` }} />
-                    ))}
-                    {zones.map((z) => (
+                  {joursDeLigne.map((jour) => (
+                    <div key={jour} className="frise-jour-cell" style={{ gridColumn: `${jour + 1} / span 1` }} />
+                  ))}
+                  {zones.map((z) => (
+                    <div
+                      key={z.id}
+                      className="frise-zone"
+                      style={{ gridColumn: `${z.jourDebut + 1} / span ${z.nbJours}` }}
+                    />
+                  ))}
+                  {marqueurs.map((m) => (
+                    <div key={m.id} className="frise-marqueur" style={{ gridColumn: `${m.jour + 1} / span 1` }}>
+                      <span className="frise-marqueur-label">{m.label}</span>
+                    </div>
+                  ))}
+                  {jourAujourdhui !== null && (
+                    <div className="frise-aujourdhui" style={{ gridColumn: `${jourAujourdhui + 1} / span 1` }} />
+                  )}
+                  {points.map((p) => {
+                    const titre = `${p.evaluations.length} évaluation${p.evaluations.length > 1 ? 's' : ''} — ${libellePoint(p.evaluations, resoudreLibelle)}`
+                    return (
                       <div
-                        key={z.id}
-                        className="frise-zone"
-                        style={{ left: `${z.leftPct}%`, width: `${z.widthPct}%` }}
-                      />
-                    ))}
-                    {marqueurs.map((m) => (
-                      <div key={m.id} className="frise-marqueur" style={{ left: `${m.leftPct}%` }}>
-                        <span className="frise-marqueur-label">{m.label}</span>
+                        key={p.id}
+                        className={`frise-point${p.passee ? ' frise-point-passee' : ''}`}
+                        style={{ gridColumn: `${p.jour + 1} / span 1`, background: COULEUR_EVALUATION }}
+                        title={titre}
+                      >
+                        {p.evaluations.length > 1 && <span className="frise-point-count">{p.evaluations.length}</span>}
                       </div>
-                    ))}
-                    {aujourdhuiPct !== null && (
-                      <div className="frise-aujourdhui" style={{ left: `${aujourdhuiPct}%` }} />
-                    )}
-                    {points.map((p) => {
-                      const jour = parseISODate(p.date).getDate()
-                      const titre = `${p.evaluations.length} évaluation${p.evaluations.length > 1 ? 's' : ''} — ${libellePoint(p.evaluations, resoudreLibelle)}`
-                      return (
-                        <div
-                          key={p.id}
-                          className={`frise-point${p.passee ? ' frise-point-passee' : ''}`}
-                          style={{ left: `${pctJour(jour)}%`, background: COULEUR_EVALUATION }}
-                          title={titre}
-                        >
-                          {p.evaluations.length > 1 && <span className="frise-point-count">{p.evaluations.length}</span>}
-                        </div>
-                      )
-                    })}
-                  </div>
+                    )
+                  })}
                 </div>
               )
             })}

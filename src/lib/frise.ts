@@ -3,43 +3,39 @@ import { etiquettesMois } from './gantt'
 import type { PeriodeCalendrier } from '../types/periodeCalendrier'
 import type { EvaluationAvecPlanning } from '../types/evaluation'
 
-// Toutes les lignes utilisent la même largeur de référence (31 jours), même
-// si le mois affiché en compte moins : le 1er de chaque mois s'aligne ainsi
-// verticalement d'une ligne à l'autre, comme un calendrier mural.
-const JOURS_PAR_LIGNE = 31
-
 export interface LigneFrise {
   id: string
   label: string
   debut: string
   fin: string
-}
-
-/** Une ligne par mois civil couvert par la plage — réutilise le découpage de l'axe Gantt. */
-export function construireLignesFrise(dateDebut: string, dateFin: string): LigneFrise[] {
-  return etiquettesMois(dateDebut, dateFin).map((e) => ({
-    id: e.id,
-    label: e.label,
-    debut: toISODate(ajouterJours(parseISODate(dateDebut), e.colDebut)),
-    fin: toISODate(ajouterJours(parseISODate(dateDebut), e.colDebut + e.colSpan - 1)),
-  }))
+  jourDebut: number
+  jourFin: number
 }
 
 function jourDuMois(date: string): number {
   return parseISODate(date).getDate()
 }
 
-export function pctJour(jour: number): number {
-  return ((jour - 1) / JOURS_PAR_LIGNE) * 100
-}
+// Pas de cours en juillet/août : même si l'année scolaire configurée
+// s'étend par défaut jusqu'à fin août, ces deux mois ne doivent jamais
+// apparaitre sur la frise.
+const MOIS_ETE_EXCLUS = [6, 7] // juillet, août (0-indexé)
 
-export function pctLargeurJours(nbJours: number): number {
-  return (nbJours / JOURS_PAR_LIGNE) * 100
+/** Une ligne par mois civil couvert par la plage (hors juillet/août) — réutilise le découpage de l'axe Gantt. */
+export function construireLignesFrise(dateDebut: string, dateFin: string): LigneFrise[] {
+  return etiquettesMois(dateDebut, dateFin)
+    .map((e) => {
+      const debut = toISODate(ajouterJours(parseISODate(dateDebut), e.colDebut))
+      const fin = toISODate(ajouterJours(parseISODate(dateDebut), e.colDebut + e.colSpan - 1))
+      return { id: e.id, label: e.label, debut, fin, jourDebut: jourDuMois(debut), jourFin: jourDuMois(fin) }
+    })
+    .filter((ligne) => !MOIS_ETE_EXCLUS.includes(parseISODate(ligne.debut).getMonth()))
 }
 
 export interface PointFrise {
   id: string
   date: string
+  jour: number
   evaluations: EvaluationAvecPlanning[]
   passee: boolean
 }
@@ -62,6 +58,7 @@ export function construirePointsFrise(
     .map(([date, liste]) => ({
       id: date,
       date,
+      jour: jourDuMois(date),
       evaluations: liste,
       passee: date < aujourdhui,
     }))
@@ -70,11 +67,11 @@ export function construirePointsFrise(
 
 export interface ZoneFrise {
   id: string
-  leftPct: number
-  widthPct: number
+  jourDebut: number
+  nbJours: number
 }
 
-/** Portion d'une période (vacances/férié) qui tombe dans la ligne du mois concerné. */
+/** Portion (en jours du mois) d'une période (vacances/férié) qui tombe dans la ligne du mois concerné. */
 export function construireZonesFrise(
   periodes: Pick<PeriodeCalendrier, 'id' | 'date_debut' | 'date_fin'>[],
   ligne: Pick<LigneFrise, 'debut' | 'fin'>,
@@ -86,18 +83,14 @@ export function construireZonesFrise(
       const fin = p.date_fin > ligne.fin ? ligne.fin : p.date_fin
       const jourDebut = jourDuMois(debut)
       const jourFin = jourDuMois(fin)
-      return {
-        id: p.id,
-        leftPct: pctJour(jourDebut),
-        widthPct: pctLargeurJours(jourFin - jourDebut + 1),
-      }
+      return { id: p.id, jourDebut, nbJours: jourFin - jourDebut + 1 }
     })
 }
 
 export interface MarqueurFrise {
   id: string
   label: string
-  leftPct: number
+  jour: number
 }
 
 /**
@@ -114,12 +107,12 @@ export function construireMarqueursTrimestre(
     .map((b) => ({
       id: `trimestre-${b.trimestre}`,
       label: `Trimestre ${b.trimestre}`,
-      leftPct: pctJour(jourDuMois(b.debut)),
+      jour: jourDuMois(b.debut),
     }))
 }
 
-/** Position (pourcentage) d'aujourd'hui dans la ligne du mois concerné, si elle y tombe. */
-export function pctAujourdhuiDansLigne(aujourdhui: string, ligne: Pick<LigneFrise, 'debut' | 'fin'>): number | null {
+/** Jour du mois où tombe aujourd'hui, si elle est dans la ligne concernée. */
+export function jourAujourdhuiDansLigne(aujourdhui: string, ligne: Pick<LigneFrise, 'debut' | 'fin'>): number | null {
   if (aujourdhui < ligne.debut || aujourdhui > ligne.fin) return null
-  return pctJour(jourDuMois(aujourdhui))
+  return jourDuMois(aujourdhui)
 }

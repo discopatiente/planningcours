@@ -1607,12 +1607,34 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+  overflow-x: auto;
+}
+
+.frise-header {
+  display: grid;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  min-width: 720px;
+}
+
+.frise-header-corner {
+  border-right: 1px solid var(--border);
+}
+
+.frise-header-jour {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  padding: 4px 0;
+  opacity: 0.7;
 }
 
 .frise-row {
   display: grid;
+  align-items: stretch;
   border-bottom: 1px solid var(--border);
   min-height: 40px;
+  min-width: 720px;
 }
 
 .frise-row:last-child {
@@ -1632,23 +1654,16 @@ h2 {
   text-overflow: ellipsis;
 }
 
-.frise-row-timeline {
-  position: relative;
-}
-
-.frise-repere {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--border);
-  z-index: 1;
+/* Une case par jour du mois — délimite visuellement les colonnes de la
+   grille pour repérer le jour concerné. Les jours au-delà de la fin du mois
+   n'ont simplement pas de case (pas de bordure ni de contenu au-delà). */
+.frise-jour-cell {
+  grid-row: 1;
+  border-right: 1px solid var(--border);
 }
 
 .frise-zone {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  grid-row: 1;
   background-color: var(--bg-sidebar);
   background-image: repeating-linear-gradient(
     45deg,
@@ -1662,10 +1677,10 @@ h2 {
 }
 
 .frise-marqueur {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  grid-row: 1;
+  position: relative;
   width: 2px;
+  justify-self: start;
   background: var(--accent);
   z-index: 2;
 }
@@ -1681,22 +1696,22 @@ h2 {
 }
 
 .frise-aujourdhui {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  grid-row: 1;
   width: 2px;
+  justify-self: center;
   background: #e5484d;
   z-index: 3;
   pointer-events: none;
 }
 
 .frise-point {
-  position: absolute;
-  top: 50%;
+  grid-row: 1;
+  position: relative;
+  align-self: center;
+  justify-self: center;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
   cursor: default;
   z-index: 4;
   display: flex;
