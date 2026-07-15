@@ -109,6 +109,23 @@ h2 {
   color: var(--accent);
 }
 
+.sidebar-groupe-titre {
+  padding: 14px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.5;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+}
+
+.sidebar-groupe-titre:first-child {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
 .app-content {
   flex: 1;
   padding: 24px 32px;
@@ -1369,375 +1386,128 @@ h2 {
   z-index: 2;
 }
 
-.gantt-overflow-banner {
-  background: rgba(216, 90, 48, 0.12);
-  border: 1px solid #d85a30;
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 14px;
+/* Tableau de bord d'avancement (« Où j'en suis ») */
+
+.avancement-entete {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
   font-size: 13px;
 }
 
-.gantt-overflow-banner ul {
-  margin: 6px 0 0;
-  padding-left: 18px;
-}
-
-.gantt-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-
-.gantt-mode-toggle {
-  display: flex;
-  gap: 4px;
-}
-
-.gantt-zoom-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.gantt-zoom-label {
-  font-size: 12px;
+.avancement-semaine {
   font-weight: 600;
-  opacity: 0.6;
-  margin-right: 2px;
+  opacity: 0.75;
 }
 
-.gantt-zoom-niveau {
-  font-size: 13px;
+.avancement-resume {
   font-weight: 600;
-  min-width: 68px;
-  text-align: center;
+  color: #2f9e44;
 }
 
-.gantt-wrapper {
-  overflow-x: auto;
+.avancement-resume-alerte {
+  color: #d85a30;
+}
+
+.avancement-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.avancement-ligne-label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.avancement-barre {
+  display: flex;
   border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.gantt-header {
-  display: grid;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-  position: sticky;
-  top: 0;
-  z-index: 4;
-}
-
-.gantt-corner {
-  border-right: 1px solid var(--border);
-}
-
-.gantt-axis-label {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 6px 4px;
-  border-left: 1px solid var(--border);
+  border-radius: 6px;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  min-height: 28px;
 }
 
-.gantt-body {
-  position: relative;
-}
-
-/* Les pourcentages de .gantt-periode / .gantt-aujourdhui-ligne doivent se
-   résoudre par rapport à la largeur de la frise seule (hors colonne des
-   libellés à gauche), comme le fait déjà la grille CSS des séances — sans ce
-   conteneur intermédiaire ils se résolvaient par rapport à .gantt-body en
-   entier (libellés + frise), ce qui décalait et étirait les bandes vers la
-   droite par rapport aux blocs de séances/évaluations qu'elles sont censées
-   recouvrir. */
-.gantt-body-timeline {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-}
-
-.gantt-periode {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(128, 128, 128, 0.16),
-    rgba(128, 128, 128, 0.16) 4px,
-    transparent 4px,
-    transparent 9px
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-.gantt-aujourdhui-ligne {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #e5484d;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.gantt-groupe-header {
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  opacity: 0.6;
-  background: var(--accent-bg);
-}
-
-.gantt-row {
-  display: grid;
-  border-bottom: 1px solid var(--border);
-  min-height: 34px;
-}
-
-.gantt-row-label {
+.avancement-bloc {
   display: flex;
   align-items: center;
-  padding: 4px 10px;
-  font-size: 13px;
-  border-right: 1px solid var(--border);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gantt-row-timeline {
-  display: grid;
-  align-items: center;
-  position: relative;
-}
-
-.gantt-bloc {
-  height: 20px;
-  margin: 2px 1px;
-  border-radius: 3px;
+  gap: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 600;
   color: #fff;
-  font-size: 10px;
-  line-height: 20px;
-  padding: 0 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.35);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  z-index: 2;
 }
 
-.gantt-bloc-passee {
+.avancement-bloc:last-child {
+  border-right: none;
+}
+
+.avancement-bloc-termine {
   opacity: 0.45;
 }
 
-.gantt-point {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  justify-self: center;
-  z-index: 2;
-}
-
-.gantt-charge-bar {
-  height: 22px;
-  margin: 2px 2px;
-  border-radius: 3px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 11px;
-  text-align: center;
-  line-height: 22px;
-  z-index: 2;
-}
-
-/* Frise des évaluations */
-
-.frise-legende {
-  display: flex;
-  gap: 18px;
-  margin: 4px 0 16px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.frise-legende-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.frise-legende-point {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.frise-legende-hachure {
-  width: 16px;
-  height: 10px;
-  flex-shrink: 0;
-  background-color: var(--bg-sidebar);
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(128, 128, 128, 0.35),
-    rgba(128, 128, 128, 0.35) 3px,
-    transparent 3px,
-    transparent 6px
-  );
-  border: 1px solid var(--border);
-}
-
-.frise-legende-trait {
-  width: 2px;
-  height: 12px;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.frise-wrapper {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  overflow-x: auto;
-}
-
-.frise-header {
-  display: grid;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-sidebar);
-  min-width: 720px;
-}
-
-.frise-header-corner {
-  border-right: 1px solid var(--border);
-}
-
-.frise-header-jour {
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  padding: 4px 0;
+.avancement-bloc-a_venir {
+  background: var(--border);
+  color: var(--text);
   opacity: 0.7;
 }
 
-.frise-row {
-  display: grid;
-  align-items: stretch;
-  border-bottom: 1px solid var(--border);
-  min-height: 40px;
-  min-width: 720px;
+.avancement-check {
+  flex-shrink: 0;
 }
 
-.frise-row:last-child {
-  border-bottom: none;
-}
-
-.frise-row-label {
-  display: flex;
-  align-items: center;
-  padding: 4px 10px;
-  font-size: 13px;
-  font-weight: 600;
-  border-right: 1px solid var(--border);
-  background: var(--bg-sidebar);
-  white-space: nowrap;
+.avancement-bloc-nom {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Une case par jour du mois — délimite visuellement les colonnes de la
-   grille pour repérer le jour concerné. Les jours au-delà de la fin du mois
-   n'ont simplement pas de case (pas de bordure ni de contenu au-delà). */
-.frise-jour-cell {
-  grid-row: 1;
-  border-right: 1px solid var(--border);
+.avancement-position {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
 }
 
-.frise-zone {
-  grid-row: 1;
-  background-color: var(--bg-sidebar);
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(128, 128, 128, 0.16),
-    rgba(128, 128, 128, 0.16) 4px,
-    transparent 4px,
-    transparent 9px
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-.frise-marqueur {
-  grid-row: 1;
-  position: relative;
-  width: 2px;
-  justify-self: start;
-  background: var(--accent);
-  z-index: 2;
-}
-
-.frise-marqueur-label {
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  font-size: 10px;
+.avancement-position-retard {
+  color: #d85a30;
+  opacity: 1;
   font-weight: 600;
-  color: var(--accent);
-  white-space: nowrap;
 }
 
-.frise-aujourdhui {
-  grid-row: 1;
-  width: 2px;
-  justify-self: center;
-  background: #e5484d;
-  z-index: 3;
-  pointer-events: none;
-}
+/* Devoirs */
 
-.frise-point {
-  grid-row: 1;
-  position: relative;
-  align-self: center;
-  justify-self: center;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  cursor: default;
-  z-index: 4;
+.devoirs-trimestres {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 4px;
+  margin-bottom: 16px;
 }
 
-.frise-point-passee {
-  opacity: 0.45;
+.devoirs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 }
 
-.frise-point-count {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 2px;
-  border-radius: 7px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 14px;
-  text-align: center;
-  color: var(--text);
+.devoirs-table th,
+.devoirs-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.devoirs-table thead {
+  background: var(--accent-bg);
+}
+
+.devoirs-alerte-semaine {
+  color: #d85a30;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .export-toolbar {
@@ -1745,6 +1515,18 @@ h2 {
   align-items: flex-end;
   gap: 10px;
   margin-bottom: 18px;
+}
+
+/* La zone d'aperçu n'est plus affichée à l'écran (prévisualisation jugée
+   inutile) — elle ne sert plus qu'à générer le PDF via window.print(). */
+.export-print-zone {
+  display: none;
+}
+
+@media print {
+  .export-print-zone {
+    display: block;
+  }
 }
 
 .export-print-titre {

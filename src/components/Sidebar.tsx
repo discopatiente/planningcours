@@ -26,15 +26,21 @@ function Sidebar() {
       </button>
       {!reduite && (
         <>
+          <div className="sidebar-groupe-titre">Consulter</div>
           <NavLink to="/semaine">Semaine</NavLink>
+          <NavLink to="/devoirs">Devoirs</NavLink>
           <NavLink to="/impressions">Impressions</NavLink>
-          <NavLink to="/gantt">Gantt</NavLink>
-          <NavLink to="/frise">Frise</NavLink>
-          <NavLink to="/chapitres">Chapitres</NavLink>
-          <NavLink to="/unites-de-cours">Unités de cours</NavLink>
-          <NavLink to="/progressions">Progressions</NavLink>
           <NavLink to="/eleves">Élèves</NavLink>
+          <NavLink to="/avancement">Où j'en suis</NavLink>
+
+          <div className="sidebar-groupe-titre">Construire</div>
+          <NavLink to="/unites-de-cours">Unités de cours</NavLink>
+          <NavLink to="/chapitres">Chapitres</NavLink>
+          <NavLink to="/progressions">Progressions</NavLink>
+
+          <div className="sidebar-groupe-titre">Régler</div>
           <NavLink to="/parametres">Paramètres</NavLink>
+
           <button type="button" className="sidebar-signout" onClick={() => signOut()}>
             Se déconnecter
           </button>

@@ -8,6 +8,7 @@ import { useAnneesScolaires } from '../hooks/useAnneesScolaires'
 import { useClasses } from '../hooks/useClasses'
 import { useEmploiDuTemps } from '../hooks/useEmploiDuTemps'
 import { usePlannings } from '../hooks/usePlannings'
+import { grouperParChapitre } from '../lib/chapitreGroupes'
 import Modal from '../components/Modal'
 
 function Progressions() {
@@ -121,29 +122,15 @@ function Progressions() {
   // progression (celui utilisé par le moteur de projection), jamais par un
   // tri global qui le trahirait. Deux passages non contigus par le même
   // chapitre (déplacement manuel) donnent donc deux groupes distincts.
-  const groupesItems = useMemo(() => {
-    const groupes: {
-      cle: string
-      chapitreId: string | null
-      chapitreNom: string
-      entrees: { item: (typeof items)[number]; index: number }[]
-    }[] = []
-    items.forEach((item, index) => {
-      const chapitreId = item.unite.chapitre?.id ?? null
-      const dernier = groupes[groupes.length - 1]
-      if (dernier && dernier.chapitreId === chapitreId) {
-        dernier.entrees.push({ item, index })
-      } else {
-        groupes.push({
-          cle: `${chapitreId ?? 'sans-chapitre'}#${index}`,
-          chapitreId,
-          chapitreNom: item.unite.chapitre?.nom ?? 'Sans chapitre',
-          entrees: [{ item, index }],
-        })
-      }
-    })
-    return groupes
-  }, [items])
+  const groupesItems = useMemo(
+    () =>
+      grouperParChapitre(
+        items.map((item, index) => ({ item, index })),
+        (e) => e.item.unite.chapitre?.id ?? null,
+        (e) => e.item.unite.chapitre?.nom ?? 'Sans chapitre',
+      ),
+    [items],
+  )
 
   useEffect(() => {
     setGroupesDeplies(new Set())

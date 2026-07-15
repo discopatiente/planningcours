@@ -9,7 +9,7 @@ import { useClasses } from '../hooks/useClasses'
 import { useInstancesUnite } from '../hooks/useInstancesUnite'
 import Modal from '../components/Modal'
 import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
-import { importerUnites, parseCsvUnites, type ResultatImportUnites } from '../lib/importUnites'
+import { importerUnites, parseCsvUnites, type ResultatImportUnites, type SeparateurCsv } from '../lib/importUnites'
 import { messageErreur } from '../lib/erreurs'
 import type { Unite } from '../types/unite'
 import type { TypeRessource } from '../types/ressource'
@@ -57,6 +57,7 @@ function UnitesDeCours() {
 
   const [importOuvert, setImportOuvert] = useState(false)
   const [fichierImport, setFichierImport] = useState<File | null>(null)
+  const [separateurImport, setSeparateurImport] = useState<SeparateurCsv>('auto')
   const [importEnCours, setImportEnCours] = useState(false)
   const [erreurImport, setErreurImport] = useState<string | null>(null)
   const [resultatImport, setResultatImport] = useState<ResultatImportUnites | null>(null)
@@ -229,6 +230,7 @@ function UnitesDeCours() {
 
   function ouvrirImport() {
     setFichierImport(null)
+    setSeparateurImport('auto')
     setErreurImport(null)
     setResultatImport(null)
     setImportOuvert(true)
@@ -241,7 +243,7 @@ function UnitesDeCours() {
     setResultatImport(null)
     try {
       const contenu = await fichierImport.text()
-      const { lignes, erreurEntete } = parseCsvUnites(contenu)
+      const { lignes, erreurEntete } = parseCsvUnites(contenu, separateurImport)
       if (erreurEntete) {
         setErreurImport(erreurEntete)
         return
@@ -921,9 +923,9 @@ function UnitesDeCours() {
         <Modal title="Importer des unités (CSV)" onClose={() => setImportOuvert(false)}>
           <p className="section-desc">
             Une ligne = une unité. Colonnes attendues : Titre, Matière, Chapitre, Lien ressource
-            (facultative — ajoutée comme support de cours). Séparateur point-virgule, première
-            ligne = en-têtes. Une matière inconnue bloque la ligne ; un chapitre inconnu est créé
-            automatiquement dans la matière correspondante.
+            (facultative — ajoutée comme support de cours). Séparateur point-virgule ou virgule,
+            première ligne = en-têtes. Une matière inconnue bloque la ligne ; un chapitre inconnu
+            est créé automatiquement dans la matière correspondante.
           </p>
           <label className="modal-field">
             Fichier CSV
@@ -936,6 +938,17 @@ function UnitesDeCours() {
                 setResultatImport(null)
               }}
             />
+          </label>
+          <label className="modal-field">
+            Séparateur
+            <select
+              value={separateurImport}
+              onChange={(e) => setSeparateurImport(e.target.value as SeparateurCsv)}
+            >
+              <option value="auto">Détection automatique</option>
+              <option value=";">Point-virgule ( ; )</option>
+              <option value=",">Virgule ( , )</option>
+            </select>
           </label>
           {erreurImport && <p className="error-text">{erreurImport}</p>}
           {resultatImport && (

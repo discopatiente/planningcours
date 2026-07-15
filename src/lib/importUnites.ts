@@ -24,11 +24,30 @@ export interface ResultatImportUnites {
   erreurs: ErreurImportUnite[]
 }
 
+export type SeparateurCsv = 'auto' | ';' | ','
+
+// Repère le séparateur le plus probable à partir de la ligne d'en-tête :
+// compte les ';' et ',' hors guillemets, le plus fréquent gagne (à égalité,
+// ';' — format français, cohérent avec l'export CSV existant).
+function detecterSeparateur(premiereLigne: string): ';' | ',' {
+  let dansGuillemets = false
+  let nbPointVirgule = 0
+  let nbVirgule = 0
+  for (const c of premiereLigne) {
+    if (c === '"') dansGuillemets = !dansGuillemets
+    else if (!dansGuillemets && c === ';') nbPointVirgule++
+    else if (!dansGuillemets && c === ',') nbVirgule++
+  }
+  return nbVirgule > nbPointVirgule ? ',' : ';'
+}
+
 // Découpe un CSV en respectant les champs entre guillemets (guillemets
-// doublés pour l'échappement, séparateur ';' — cohérent avec l'export CSV
-// existant). Tolère un BOM UTF-8 en tête de fichier.
-function parseCsvBrut(texte: string): string[][] {
+// doublés pour l'échappement). Séparateur ';' (format français) ou ','
+// selon `separateur` — 'auto' détecte à partir de l'en-tête. Tolère un BOM
+// UTF-8 en tête de fichier.
+function parseCsvBrut(texte: string, separateur: SeparateurCsv = 'auto'): string[][] {
   const source = texte.charCodeAt(0) === 0xfeff ? texte.slice(1) : texte
+  const sep = separateur === 'auto' ? detecterSeparateur(source.split(/\r?\n/, 1)[0] ?? '') : separateur
   const lignes: string[][] = []
   let ligne: string[] = []
   let champ = ''
@@ -51,7 +70,7 @@ function parseCsvBrut(texte: string): string[][] {
     }
     if (c === '"') {
       dansGuillemets = true
-    } else if (c === ';') {
+    } else if (c === sep) {
       ligne.push(champ)
       champ = ''
     } else if (c === '\r') {
@@ -85,11 +104,14 @@ function normaliserNom(s: string): string {
   return retirerAccents(s).toLowerCase().trim()
 }
 
-export function parseCsvUnites(contenu: string): {
+export function parseCsvUnites(
+  contenu: string,
+  separateur: SeparateurCsv = 'auto',
+): {
   lignes: LigneImportUnite[]
   erreurEntete: string | null
 } {
-  const lignesBrutes = parseCsvBrut(contenu)
+  const lignesBrutes = parseCsvBrut(contenu, separateur)
   if (lignesBrutes.length === 0) {
     return { lignes: [], erreurEntete: 'Le fichier est vide.' }
   }
@@ -105,7 +127,7 @@ export function parseCsvUnites(contenu: string): {
       lignes: [],
       erreurEntete:
         'En-tête invalide : colonnes attendues « Titre », « Matière » et « Chapitre » ' +
-        '(+ « Lien ressource », facultative). Séparateur attendu : point-virgule.',
+        '(+ « Lien ressource », facultative). Séparateur attendu : point-virgule ou virgule.',
     }
   }
 
