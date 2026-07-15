@@ -78,7 +78,7 @@ export async function updateStatutEvaluation(id: string, statut: StatutEvaluatio
 
 export async function updateEvaluation(
   id: string,
-  changes: Partial<Pick<Evaluation, 'date' | 'heure_debut' | 'trimestre'>>,
+  changes: Partial<Pick<Evaluation, 'date' | 'heure_debut' | 'trimestre' | 'lien_sujet' | 'lien_corrige'>>,
 ): Promise<Evaluation> {
   const { data, error } = await supabase.from('evaluations').update(changes).eq('id', id).select().single()
   if (error) throw error

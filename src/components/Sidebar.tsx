@@ -28,13 +28,14 @@ function Sidebar() {
         <>
           <div className="sidebar-groupe-titre">Consulter</div>
           <NavLink to="/semaine">Semaine</NavLink>
-          <NavLink to="/devoirs">Devoirs</NavLink>
+          <NavLink to="/devoirs">Liste des devoirs</NavLink>
           <NavLink to="/impressions">Impressions</NavLink>
           <NavLink to="/eleves">Élèves</NavLink>
           <NavLink to="/avancement">Où j'en suis</NavLink>
 
           <div className="sidebar-groupe-titre">Construire</div>
           <NavLink to="/unites-de-cours">Unités de cours</NavLink>
+          <NavLink to="/banque-devoirs">Banque de devoirs</NavLink>
           <NavLink to="/chapitres">Chapitres</NavLink>
           <NavLink to="/progressions">Progressions</NavLink>
 

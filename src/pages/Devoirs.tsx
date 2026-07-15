@@ -10,6 +10,7 @@ import { useSeancesEvaluationsAnnee } from '../hooks/useSeancesEvaluationsAnnee'
 import { bornesTrimestres, cleCreneauDate, type CreneauDate } from '../lib/projectionEngine'
 import { creneauxCandidatsDevoir } from '../lib/devoirs'
 import { deplacerEvaluationAvecCascade } from '../lib/evaluationActions'
+import { updateEvaluation } from '../lib/evaluations'
 import { messageErreur } from '../lib/erreurs'
 import { toISODate } from '../lib/dates'
 import { lundiDeLaSemaine } from '../lib/semaineAB'
@@ -60,6 +61,7 @@ function Devoirs() {
   const [trimestreChoisi, setTrimestreChoisi] = useState<1 | 2 | 3 | null>(null)
   const [enCours, setEnCours] = useState<Set<string>>(new Set())
   const [erreursLignes, setErreursLignes] = useState<Record<string, string | null>>({})
+  const [ligneEnEdition, setLigneEnEdition] = useState<string | null>(null)
 
   const aujourdhui = toISODate(new Date())
 
@@ -120,6 +122,7 @@ function Devoirs() {
     try {
       await deplacerEvaluationAvecCascade(evaluation, date, heure, classeId, matiereId, anneeActive)
       await reload()
+      setLigneEnEdition(null)
     } catch (err) {
       setErreursLignes((prev) => ({ ...prev, [evaluation.id]: messageErreur(err) }))
     } finally {
@@ -131,9 +134,14 @@ function Devoirs() {
     }
   }
 
+  async function handleChangerLien(evaluationId: string, champ: 'lien_sujet' | 'lien_corrige', valeur: string) {
+    await updateEvaluation(evaluationId, { [champ]: valeur.trim() || null })
+    await reload()
+  }
+
   return (
     <div>
-      <h2 className="section-title">Devoirs</h2>
+      <h2 className="section-title">Liste des devoirs</h2>
       <p className="section-desc">
         Dates des devoirs du trimestre sélectionné, toutes classes confondues. Les dates sont
         modifiables directement ici : le créneau libéré et le nouveau créneau occupé sont pris en
@@ -171,6 +179,8 @@ function Devoirs() {
                     <th>Titre</th>
                     <th>Date</th>
                     <th>Statut</th>
+                    <th>Sujet</th>
+                    <th>Corrigé</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -178,6 +188,7 @@ function Devoirs() {
                     const semaine = toISODate(lundiDeLaSemaine(evaluation.date))
                     const enDepassement = (comptageParSemaine.get(semaine) ?? 0) > maxEvaluationsSemaine
                     const cleActuelle = cleCreneauDate(evaluation)
+                    const enEdition = ligneEnEdition === evaluation.id
 
                     return (
                       <tr key={evaluation.id}>
@@ -186,35 +197,57 @@ function Devoirs() {
                         <td>{evaluation.titre ?? 'Évaluation'}</td>
                         <td>
                           {evaluation.statut === 'a_venir' && matiere ? (
-                            <select
-                              value={cleActuelle}
-                              disabled={enCours.has(evaluation.id)}
-                              onChange={(e) => handleChangerCreneau(evaluation, classe.id, matiere.id, e.target.value)}
-                            >
-                              {(() => {
-                                const candidats = creneauxCandidatsDevoir(
-                                  evaluation.id,
-                                  evaluation.planning_id,
-                                  classe.id,
-                                  matiere.id,
-                                  anneeActive,
-                                  creneaux,
-                                  periodes,
-                                  seances,
-                                  evaluations,
-                                )
-                                const options = candidats.some((d) => cleCreneauDate(d) === cleActuelle)
-                                  ? candidats
-                                  : [{ date: evaluation.date, heure_debut: evaluation.heure_debut }, ...candidats]
-                                return options
-                                  .sort((a, b) => (cleCreneauDate(a) < cleCreneauDate(b) ? -1 : 1))
-                                  .map((d) => (
-                                    <option key={cleCreneauDate(d)} value={cleCreneauDate(d)}>
-                                      {formatCreneauLabel(d)}
-                                    </option>
-                                  ))
-                              })()}
-                            </select>
+                            enEdition ? (
+                              <div className="devoirs-date-edition">
+                                <select
+                                  value={cleActuelle}
+                                  autoFocus
+                                  disabled={enCours.has(evaluation.id)}
+                                  onChange={(e) =>
+                                    handleChangerCreneau(evaluation, classe.id, matiere.id, e.target.value)
+                                  }
+                                >
+                                  {(() => {
+                                    const candidats = creneauxCandidatsDevoir(
+                                      evaluation.id,
+                                      evaluation.planning_id,
+                                      classe.id,
+                                      matiere.id,
+                                      anneeActive,
+                                      creneaux,
+                                      periodes,
+                                      seances,
+                                      evaluations,
+                                    )
+                                    const options = candidats.some((d) => cleCreneauDate(d) === cleActuelle)
+                                      ? candidats
+                                      : [{ date: evaluation.date, heure_debut: evaluation.heure_debut }, ...candidats]
+                                    return options
+                                      .sort((a, b) => (cleCreneauDate(a) < cleCreneauDate(b) ? -1 : 1))
+                                      .map((d) => (
+                                        <option key={cleCreneauDate(d)} value={cleCreneauDate(d)}>
+                                          {formatCreneauLabel(d)}
+                                        </option>
+                                      ))
+                                  })()}
+                                </select>
+                                <button
+                                  type="button"
+                                  className="btn-sm"
+                                  disabled={enCours.has(evaluation.id)}
+                                  onClick={() => setLigneEnEdition(null)}
+                                >
+                                  Annuler
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="devoirs-date-cell">
+                                <span>{formatCreneauLabel(evaluation)}</span>
+                                <button type="button" className="btn-sm" onClick={() => setLigneEnEdition(evaluation.id)}>
+                                  Modifier
+                                </button>
+                              </div>
+                            )
                           ) : (
                             formatCreneauLabel(evaluation)
                           )}
@@ -228,6 +261,48 @@ function Devoirs() {
                           )}
                         </td>
                         <td>{LIBELLES_STATUT[evaluation.statut] ?? evaluation.statut}</td>
+                        <td>
+                          <div className="devoirs-lien-cell">
+                            <input
+                              type="url"
+                              className="input-sm"
+                              placeholder="https://…"
+                              defaultValue={evaluation.lien_sujet ?? ''}
+                              onBlur={(e) => {
+                                const valeur = e.target.value.trim()
+                                if (valeur !== (evaluation.lien_sujet ?? '')) {
+                                  handleChangerLien(evaluation.id, 'lien_sujet', valeur)
+                                }
+                              }}
+                            />
+                            {evaluation.lien_sujet && (
+                              <a href={evaluation.lien_sujet} target="_blank" rel="noreferrer" title="Ouvrir le sujet">
+                                ↗
+                              </a>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="devoirs-lien-cell">
+                            <input
+                              type="url"
+                              className="input-sm"
+                              placeholder="https://…"
+                              defaultValue={evaluation.lien_corrige ?? ''}
+                              onBlur={(e) => {
+                                const valeur = e.target.value.trim()
+                                if (valeur !== (evaluation.lien_corrige ?? '')) {
+                                  handleChangerLien(evaluation.id, 'lien_corrige', valeur)
+                                }
+                              }}
+                            />
+                            {evaluation.lien_corrige && (
+                              <a href={evaluation.lien_corrige} target="_blank" rel="noreferrer" title="Ouvrir le corrigé">
+                                ↗
+                              </a>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     )
                   })}

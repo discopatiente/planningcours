@@ -11,6 +11,7 @@ import OuJEnSuis from './pages/OuJEnSuis'
 import Devoirs from './pages/Devoirs'
 import Chapitres from './pages/Chapitres'
 import UnitesDeCours from './pages/UnitesDeCours'
+import BanqueDevoirs from './pages/BanqueDevoirs'
 import Progressions from './pages/Progressions'
 import Eleves from './pages/Eleves'
 import Parametres from './pages/Parametres'
@@ -53,6 +54,7 @@ function AppRoutes() {
           <Route path="/devoirs" element={<Devoirs />} />
           <Route path="/chapitres" element={<Chapitres />} />
           <Route path="/unites-de-cours" element={<UnitesDeCours />} />
+          <Route path="/banque-devoirs" element={<BanqueDevoirs />} />
           <Route path="/progressions" element={<Progressions />} />
           <Route path="/eleves" element={<Eleves />} />
           <Route path="/parametres" element={<Parametres />}>

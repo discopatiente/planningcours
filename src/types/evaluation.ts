@@ -8,6 +8,8 @@ export interface Evaluation {
   trimestre: 1 | 2 | 3
   titre: string | null
   statut: StatutEvaluation
+  lien_sujet: string | null
+  lien_corrige: string | null
 }
 
 export interface EvaluationAvecPlanning extends Evaluation {

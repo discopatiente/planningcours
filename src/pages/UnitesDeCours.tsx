@@ -277,7 +277,16 @@ function UnitesDeCours() {
   }
 
   function handleChapitreChange(unite: Unite, value: string) {
-    assignerChapitre(unite.id, value || null)
+    const chapitreId = value || null
+    assignerChapitre(unite.id, chapitreId)
+    // Si le nouveau chapitre sort du filtre actif, la ligne en cours
+    // d'édition disparaîtrait sinon instantanément de la vue (elle ne
+    // correspondrait plus au filtre) — on élargit le filtre pour la garder
+    // visible plutôt que de laisser croire que la sélection n'a rien fait.
+    const correspondAuFiltre =
+      filtreChapitreId === '' ||
+      (filtreChapitreId === SANS_CHAPITRE ? chapitreId === null : filtreChapitreId === chapitreId)
+    if (!correspondAuFiltre) setFiltreChapitreId('')
   }
 
   function handleDropUnite(indexCible: number) {
