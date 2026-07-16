@@ -7,6 +7,7 @@ import { useEmploiDuTemps } from '../hooks/useEmploiDuTemps'
 import { usePeriodesCalendrier } from '../hooks/usePeriodesCalendrier'
 import { useParametres } from '../hooks/useParametres'
 import { useSeancesEvaluationsAnnee } from '../hooks/useSeancesEvaluationsAnnee'
+import { useBanqueDevoirs } from '../hooks/useBanqueDevoirs'
 import { bornesTrimestres, cleCreneauDate, type CreneauDate } from '../lib/projectionEngine'
 import { creneauxCandidatsDevoir } from '../lib/devoirs'
 import { deplacerEvaluationAvecCascade } from '../lib/evaluationActions'
@@ -57,6 +58,7 @@ function Devoirs() {
     error: erreurChargement,
     reload,
   } = useSeancesEvaluationsAnnee(anneeActive?.id ?? null, anneeActive?.date_debut ?? '', anneeActive?.date_fin ?? '')
+  const { devoirs: banqueDevoirs } = useBanqueDevoirs()
 
   const [trimestreChoisi, setTrimestreChoisi] = useState<1 | 2 | 3 | null>(null)
   const [enCours, setEnCours] = useState<Set<string>>(new Set())
@@ -68,6 +70,7 @@ function Devoirs() {
   const classesParId = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes])
   const matieresParId = useMemo(() => new Map(matieres.map((m) => [m.id, m])), [matieres])
   const progressionsParId = useMemo(() => new Map(progressions.map((p) => [p.id, p])), [progressions])
+  const banqueDevoirsParId = useMemo(() => new Map(banqueDevoirs.map((d) => [d.id, d])), [banqueDevoirs])
 
   function matiereDe(e: EvaluationAvecPlanning): Matiere | undefined {
     const progression = progressionsParId.get(e.planning.progression_id)
@@ -139,13 +142,21 @@ function Devoirs() {
     await reload()
   }
 
+  async function handleChangerBanqueDevoir(evaluationId: string, banqueDevoirId: string) {
+    await updateEvaluation(evaluationId, { banque_devoir_id: banqueDevoirId || null })
+    await reload()
+  }
+
   return (
     <div>
       <h2 className="section-title">Liste des devoirs</h2>
       <p className="section-desc">
         Dates des devoirs du trimestre sélectionné, toutes classes confondues. Les dates sont
         modifiables directement ici : le créneau libéré et le nouveau créneau occupé sont pris en
-        compte pour que la progression de la classe reste continue, sans séance perdue.
+        compte pour que la progression de la classe reste continue, sans séance perdue. Un devoir
+        peut être relié à un sujet de la Banque de devoirs (colonne « Devoir (banque) », filtrée sur
+        la matière de la classe) : les liens sujet/corrigé affichés viennent alors de la banque ;
+        sans lien, les liens restent modifiables ici au cas par cas.
       </p>
 
       {erreurChargement && <p className="error-text">{erreurChargement}</p>}
@@ -179,6 +190,7 @@ function Devoirs() {
                     <th>Titre</th>
                     <th>Date</th>
                     <th>Statut</th>
+                    <th>Devoir (banque)</th>
                     <th>Sujet</th>
                     <th>Corrigé</th>
                   </tr>
@@ -189,6 +201,14 @@ function Devoirs() {
                     const enDepassement = (comptageParSemaine.get(semaine) ?? 0) > maxEvaluationsSemaine
                     const cleActuelle = cleCreneauDate(evaluation)
                     const enEdition = ligneEnEdition === evaluation.id
+                    const banqueDevoirLie = evaluation.banque_devoir_id
+                      ? banqueDevoirsParId.get(evaluation.banque_devoir_id)
+                      : undefined
+                    const banqueDevoirsMatiere = matiere
+                      ? banqueDevoirs
+                          .filter((d) => d.matiere_id === matiere.id)
+                          .sort((a, b) => a.titre.localeCompare(b.titre))
+                      : []
 
                     return (
                       <tr key={evaluation.id}>
@@ -262,46 +282,86 @@ function Devoirs() {
                         </td>
                         <td>{LIBELLES_STATUT[evaluation.statut] ?? evaluation.statut}</td>
                         <td>
-                          <div className="devoirs-lien-cell">
-                            <input
-                              type="url"
-                              className="input-sm"
-                              placeholder="https://…"
-                              defaultValue={evaluation.lien_sujet ?? ''}
-                              onBlur={(e) => {
-                                const valeur = e.target.value.trim()
-                                if (valeur !== (evaluation.lien_sujet ?? '')) {
-                                  handleChangerLien(evaluation.id, 'lien_sujet', valeur)
-                                }
-                              }}
-                            />
-                            {evaluation.lien_sujet && (
-                              <a href={evaluation.lien_sujet} target="_blank" rel="noreferrer" title="Ouvrir le sujet">
-                                ↗
-                              </a>
-                            )}
-                          </div>
+                          <select
+                            className="input-sm"
+                            value={evaluation.banque_devoir_id ?? ''}
+                            disabled={!matiere}
+                            onChange={(e) => handleChangerBanqueDevoir(evaluation.id, e.target.value)}
+                          >
+                            <option value="">— Aucun —</option>
+                            {banqueDevoirsMatiere.map((d) => (
+                              <option key={d.id} value={d.id}>
+                                {d.titre}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td>
-                          <div className="devoirs-lien-cell">
-                            <input
-                              type="url"
-                              className="input-sm"
-                              placeholder="https://…"
-                              defaultValue={evaluation.lien_corrige ?? ''}
-                              onBlur={(e) => {
-                                const valeur = e.target.value.trim()
-                                if (valeur !== (evaluation.lien_corrige ?? '')) {
-                                  handleChangerLien(evaluation.id, 'lien_corrige', valeur)
-                                }
-                              }}
-                            />
-                            {evaluation.lien_corrige && (
-                              <a href={evaluation.lien_corrige} target="_blank" rel="noreferrer" title="Ouvrir le corrigé">
-                                ↗
+                          {banqueDevoirLie ? (
+                            banqueDevoirLie.lien_sujet ? (
+                              <a href={banqueDevoirLie.lien_sujet} target="_blank" rel="noreferrer" title="Ouvrir le sujet">
+                                ↗ Sujet (banque)
                               </a>
-                            )}
-                          </div>
+                            ) : (
+                              <span className="section-desc">Pas de sujet dans la banque</span>
+                            )
+                          ) : (
+                            <div className="devoirs-lien-cell">
+                              <input
+                                type="url"
+                                className="input-sm"
+                                placeholder="https://…"
+                                defaultValue={evaluation.lien_sujet ?? ''}
+                                onBlur={(e) => {
+                                  const valeur = e.target.value.trim()
+                                  if (valeur !== (evaluation.lien_sujet ?? '')) {
+                                    handleChangerLien(evaluation.id, 'lien_sujet', valeur)
+                                  }
+                                }}
+                              />
+                              {evaluation.lien_sujet && (
+                                <a href={evaluation.lien_sujet} target="_blank" rel="noreferrer" title="Ouvrir le sujet">
+                                  ↗
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {banqueDevoirLie ? (
+                            banqueDevoirLie.lien_corrige ? (
+                              <a
+                                href={banqueDevoirLie.lien_corrige}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Ouvrir le corrigé"
+                              >
+                                ↗ Corrigé (banque)
+                              </a>
+                            ) : (
+                              <span className="section-desc">Pas de corrigé dans la banque</span>
+                            )
+                          ) : (
+                            <div className="devoirs-lien-cell">
+                              <input
+                                type="url"
+                                className="input-sm"
+                                placeholder="https://…"
+                                defaultValue={evaluation.lien_corrige ?? ''}
+                                onBlur={(e) => {
+                                  const valeur = e.target.value.trim()
+                                  if (valeur !== (evaluation.lien_corrige ?? '')) {
+                                    handleChangerLien(evaluation.id, 'lien_corrige', valeur)
+                                  }
+                                }}
+                              />
+                              {evaluation.lien_corrige && (
+                                <a href={evaluation.lien_corrige} target="_blank" rel="noreferrer" title="Ouvrir le corrigé">
+                                  ↗
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     )

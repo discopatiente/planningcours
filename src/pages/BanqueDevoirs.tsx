@@ -78,8 +78,9 @@ function BanqueDevoirs() {
       <h2 className="section-title">Banque de devoirs</h2>
       <p className="section-desc">
         Réservoir de devoirs réutilisables — titre, matière, niveau, notion et liens vers le sujet
-        et le corrigé. Indépendant des devoirs déjà programmés dans un planning (onglet Liste des
-        devoirs) : piocher ici reste manuel.
+        et le corrigé. Depuis l'onglet Liste des devoirs, un devoir programmé peut être relié à un
+        sujet d'ici (colonne « Devoir (banque) ») ; les liens sujet/corrigé affichés là-bas
+        proviennent alors de la fiche éditée ici.
       </p>
 
       {error && <p className="error-text">{error}</p>}

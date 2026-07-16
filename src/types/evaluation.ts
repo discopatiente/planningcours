@@ -10,6 +10,7 @@ export interface Evaluation {
   statut: StatutEvaluation
   lien_sujet: string | null
   lien_corrige: string | null
+  banque_devoir_id: string | null
 }
 
 export interface EvaluationAvecPlanning extends Evaluation {
