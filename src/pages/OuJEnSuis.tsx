@@ -38,7 +38,8 @@ function OuJEnSuis() {
         )
         return {
           id: planning.id,
-          label: `${classe.nom} — ${matiere?.nom ?? '?'}`,
+          classeNom: classe.nom,
+          matiereNom: matiere?.nom ?? '?',
           couleur: matiere?.couleur ?? '#999',
           tri: `${classe.nom}|${matiere?.nom ?? ''}`,
           avancement,
@@ -50,6 +51,12 @@ function OuJEnSuis() {
 
   const semaine = anneeActive ? semaineAnnee(anneeActive.date_debut, anneeActive.date_fin, aujourdhui) : null
   const nbClassesEnRetard = lignes.filter((l) => l.avancement.enRetard).length
+
+  // Longueur de la barre proportionnelle au nombre de chapitres, relative à
+  // la progression la plus longue — une classe avec 2 chapitres a une barre
+  // visiblement plus courte qu'une classe qui en a 10, plutôt que des barres
+  // toutes étirées à la même largeur quel que soit leur contenu.
+  const maxChapitres = Math.max(1, ...lignes.map((l) => l.avancement.blocs.length))
 
   const loading = planningsLoading || donneesLoading
   const error = erreurPlannings || erreurDonnees
@@ -70,55 +77,111 @@ function OuJEnSuis() {
         !loading && (
           <>
             <div className="avancement-entete">
-              {semaine && (
-                <span className="avancement-semaine">
-                  Semaine {semaine.numero} sur {semaine.total}
+              <div className="avancement-entete-gauche">
+                {semaine && (
+                  <span className="avancement-semaine">
+                    Semaine {semaine.numero} sur {semaine.total}
+                  </span>
+                )}
+                <span className={`avancement-resume${nbClassesEnRetard > 0 ? ' avancement-resume-alerte' : ''}`}>
+                  {nbClassesEnRetard === 0
+                    ? 'Aucune classe en retard'
+                    : `${nbClassesEnRetard} classe${nbClassesEnRetard > 1 ? 's' : ''} en retard sur ${lignes.length}`}
                 </span>
-              )}
-              <span className={`avancement-resume${nbClassesEnRetard > 0 ? ' avancement-resume-alerte' : ''}`}>
-                {nbClassesEnRetard === 0
-                  ? 'Aucune classe en retard'
-                  : `${nbClassesEnRetard} classe${nbClassesEnRetard > 1 ? 's' : ''} en retard sur ${lignes.length}`}
-              </span>
+              </div>
+              <div className="avancement-legende">
+                <span className="avancement-legende-item">
+                  <span className="avancement-legende-dot avancement-legende-dot-termine" />
+                  Fait
+                </span>
+                <span className="avancement-legende-item">
+                  <span className="avancement-legende-dot" />
+                  En cours
+                </span>
+                <span className="avancement-legende-item">
+                  <span className="avancement-legende-dot avancement-legende-dot-a_venir" />
+                  À venir
+                </span>
+                <span className="avancement-legende-item">
+                  <span className="avancement-legende-dot avancement-legende-dot-retard" />
+                  En retard
+                </span>
+              </div>
             </div>
 
             {lignes.length === 0 ? (
               <p className="section-desc">Aucun planning généré pour cette année.</p>
             ) : (
-              <div className="avancement-liste">
-                {lignes.map((ligne) => (
-                  <div key={ligne.id} className="avancement-ligne">
-                    <div className="avancement-ligne-label">{ligne.label}</div>
-                    <div className="avancement-barre">
-                      {ligne.avancement.blocs.length === 0 ? (
-                        <div className="avancement-bloc avancement-bloc-a_venir" style={{ flex: '1 0 0' }}>
-                          Aucune unité
+              <>
+                <div className="avancement-table-header">
+                  <div className="avancement-col-classe">Classe</div>
+                  <div className="avancement-barre-col">Progression des chapitres</div>
+                  <div className="avancement-col-chapitre">Chapitre en cours</div>
+                  <div className="avancement-col-pourcentage">Avancement</div>
+                </div>
+                <div className="avancement-liste">
+                  {lignes.map((ligne) => (
+                    <div key={ligne.id} className="avancement-ligne">
+                      <div className="avancement-col-classe">
+                        <div className="avancement-classe-nom">{ligne.classeNom}</div>
+                        <div className="avancement-classe-matiere">
+                          <span className="referentiel-group-dot" style={{ background: ligne.couleur }} />
+                          {ligne.matiereNom}
                         </div>
-                      ) : (
-                        ligne.avancement.blocs.map((bloc) => (
-                          <div
-                            key={bloc.id}
-                            className={`avancement-bloc avancement-bloc-${bloc.statut}`}
-                            style={{
-                              flex: `${bloc.nbUnites} 0 0`,
-                              background: bloc.statut === 'a_venir' ? undefined : ligne.couleur,
-                            }}
-                            title={`${bloc.nom} (${bloc.nbUnites} unité${bloc.nbUnites > 1 ? 's' : ''})`}
-                          >
-                            {bloc.statut === 'termine' && <span className="avancement-check">✓</span>}
-                            <span className="avancement-bloc-nom">{bloc.nom}</span>
+                      </div>
+                      <div className="avancement-barre-col">
+                        {ligne.avancement.blocs.length === 0 ? (
+                          <div className="avancement-barre" style={{ width: '100%' }}>
+                            <div className="avancement-bloc avancement-bloc-a_venir" style={{ flex: '1 1 0' }}>
+                              Aucune unité
+                            </div>
                           </div>
-                        ))
-                      )}
+                        ) : (
+                          <div
+                            className="avancement-barre"
+                            style={{ width: `${(ligne.avancement.blocs.length / maxChapitres) * 100}%` }}
+                          >
+                            {ligne.avancement.blocs.map((bloc, index) => (
+                              <div
+                                key={bloc.id}
+                                className={`avancement-bloc avancement-bloc-${bloc.statut}`}
+                                style={
+                                  bloc.statut === 'termine'
+                                    ? { background: ligne.couleur }
+                                    : bloc.statut === 'en_cours'
+                                      ? {
+                                          background: `color-mix(in srgb, ${ligne.couleur} 16%, white)`,
+                                          borderColor: ligne.couleur,
+                                          color: ligne.couleur,
+                                        }
+                                      : undefined
+                                }
+                                title={`${bloc.nom} (${bloc.nbUnites} unité${bloc.nbUnites > 1 ? 's' : ''})`}
+                              >
+                                {index + 1}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="avancement-col-chapitre">
+                        {ligne.avancement.chapitreEnCoursNumero
+                          ? `${ligne.avancement.chapitreEnCoursNumero} · ${ligne.avancement.chapitreEnCoursNom}`
+                          : '—'}
+                      </div>
+                      <div className="avancement-col-pourcentage">
+                        <div className="avancement-pourcentage-valeur">{ligne.avancement.pourcentage}%</div>
+                        <div
+                          className={`avancement-statut-texte${ligne.avancement.enRetard ? ' avancement-statut-retard' : ''}`}
+                        >
+                          {ligne.avancement.enRetard && <span className="avancement-statut-dot" />}
+                          {ligne.avancement.statutTexte}
+                        </div>
+                      </div>
                     </div>
-                    <p
-                      className={`avancement-position${ligne.avancement.enRetard ? ' avancement-position-retard' : ''}`}
-                    >
-                      {ligne.avancement.positionLabel}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </>
         )

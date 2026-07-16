@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&amp;display=swap">
+<style>
+  body{margin:0;background:#e4e2e1;font-family:"Archivo",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .sw-nav{padding:8px 8px;border-left:2px solid transparent;color:rgba(32,30,29,.8);font-size:14px}
+  .sw-kicker{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(32,30,29,.5);margin:0 0 8px 8px}
+  .btn{font-family:Archivo;font-weight:800;font-size:13px;padding:9px 16px;border:1px solid transparent;cursor:pointer}
+  .btn-primary{background:#ec3013;color:#f3f2f2}
+  .btn-secondary{border-color:rgba(32,30,29,.4);color:#201e1d;background:transparent}
+  .chip{padding:6px 13px;font-size:12px;border:1px solid rgba(32,30,29,.3);color:rgba(32,30,29,.75)}
+  .chip-active{background:#201e1d;color:#f3f2f2;border-color:#201e1d}
+  .unit-row{display:flex;flex-direction:column;gap:3px;padding:11px 14px;border-bottom:1px solid rgba(32,30,29,.10);cursor:pointer}
+  .unit-row-active{background:#fff2ef;border-left:3px solid #ec3013;padding-left:11px}
+  .flabel{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:rgba(32,30,29,.55);margin-bottom:6px}
+  .finput{width:100%;padding:9px 11px;font:14px Archivo,sans-serif;color:#201e1d;background:#eae9e9;border:1px solid rgba(32,30,29,.3)}
+  .res-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(32,30,29,.15);margin-bottom:6px}
+</style>
+</helmet>
+<div style="display:flex;align-items:stretch;min-height:900px;width:1600px;background:#f3f2f2">
+
+  <div style="width:232px;flex:none;background:#eae9e9;border-right:2px solid rgba(32,30,29,.4);padding:22px 18px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:18px;height:18px;background:#ec3013;flex:none"></div>
+      <div style="font-weight:800;font-size:17px;letter-spacing:-.01em">Semainier</div>
+    </div>
+    <div>
+      <div class="sw-kicker">Consulter</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div class="sw-nav">Semaine</div>
+        <div class="sw-nav">Devoirs</div>
+        <div class="sw-nav">Élèves</div>
+        <div class="sw-nav">Où j'en suis</div>
+      </div>
+    </div>
+    <div>
+      <div class="sw-kicker">Construire</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;padding:8px 8px;border-left:2px solid #ec3013;color:#ec3013;font-size:14px;font-weight:600;background:#fff2ef">Unités de cours</div>
+        <div class="sw-nav">Chapitres</div>
+        <div class="sw-nav">Progressions</div>
+      </div>
+    </div>
+    <div>
+      <div class="sw-kicker">Régler</div>
+      <div class="sw-nav">Paramètres</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 32px;border-bottom:2px solid rgba(32,30,29,.4)">
+      <div style="display:flex;align-items:baseline;gap:14px">
+        <div style="font-family:Archivo;font-weight:800;font-size:28px;letter-spacing:-.01em">Unités de cours</div>
+        <div style="font-size:14px;color:rgba(32,30,29,.6)">La réserve</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-secondary">Importer un fichier</button>
+        <button class="btn btn-primary">+ Nouvelle unité</button>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid rgba(32,30,29,.12)">
+      <div style="display:flex;gap:8px">
+        <div class="chip">Toutes</div>
+        <div class="chip chip-active">Philo</div>
+        <div class="chip">HLP</div>
+        <div class="chip">EMC</div>
+        <div class="chip">SNT</div>
+      </div>
+      <input class="finput" style="width:220px" placeholder="Rechercher une unité…">
+    </div>
+
+    <div style="display:flex;flex:1;min-height:0">
+
+      <!-- LIST -->
+      <div style="width:380px;flex:none;border-right:2px solid rgba(32,30,29,.4);overflow:hidden">
+        <div style="padding:12px 14px 6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(32,30,29,.5)">Chapitre — La conscience</div>
+        <div class="unit-row unit-row-active">
+          <div style="font-size:14px;font-weight:700">La conscience</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">5 ressources · notes</div>
+        </div>
+        <div class="unit-row">
+          <div style="font-size:14px">L'inconscient</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">3 ressources</div>
+        </div>
+        <div class="unit-row">
+          <div style="font-size:14px">Autrui et la reconnaissance</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">4 ressources</div>
+        </div>
+        <div style="padding:14px 14px 6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(32,30,29,.5)">Chapitre — Le désir</div>
+        <div class="unit-row">
+          <div style="font-size:14px">Désir et raison</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">4 ressources</div>
+        </div>
+        <div class="unit-row">
+          <div style="font-size:14px">Le bonheur est-il un devoir&nbsp;?</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">2 ressources</div>
+        </div>
+        <div style="padding:14px 14px 6px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(32,30,29,.5)">Chapitre — La liberté</div>
+        <div class="unit-row">
+          <div style="font-size:14px">Suis-je libre&nbsp;?</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">3 ressources</div>
+        </div>
+        <div class="unit-row">
+          <div style="font-size:14px">Déterminisme et responsabilité</div>
+          <div style="font-size:11px;color:rgba(32,30,29,.55)">2 ressources</div>
+        </div>
+      </div>
+
+      <!-- DETAIL -->
+      <div style="flex:1;min-width:0;padding:24px 36px;overflow:hidden">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <div style="display:inline-block;font-size:11px;padding:2px 8px;background:#eae6f2;color:#4a3170;margin-bottom:8px">Philo · La conscience</div>
+            <div style="font-size:22px;font-weight:800">La conscience</div>
+          </div>
+          <button class="btn btn-secondary">Dupliquer</button>
+        </div>
+
+        <div style="margin-bottom:22px">
+          <div class="flabel">Titre</div>
+          <input class="finput" value="La conscience">
+        </div>
+
+        <div style="display:flex;gap:16px;margin-bottom:22px">
+          <div style="flex:1"><div class="flabel">Matière</div><input class="finput" value="Philosophie"></div>
+          <div style="flex:1"><div class="flabel">Chapitre</div><input class="finput" value="La conscience"></div>
+        </div>
+
+        <div style="margin-bottom:22px">
+          <div class="flabel">Ressources attachées</div>
+          <div class="res-row"><div style="width:14px;height:14px;flex:none;border:1.5px solid rgba(32,30,29,.5)"></div><div style="flex:1;font-size:13px">Support de cours — <span style="color:rgba(32,30,29,.55)">la-conscience.pdf</span></div><div style="font-size:11px;color:rgba(32,30,29,.4)">×</div></div>
+          <div class="res-row"><div style="width:14px;height:14px;flex:none;border:1.5px solid rgba(32,30,29,.5)"></div><div style="flex:1;font-size:13px">Vidéo — <span style="color:rgba(32,30,29,.55)">Freud et l'inconscient (12 min)</span></div><div style="font-size:11px;color:rgba(32,30,29,.4)">×</div></div>
+          <div class="res-row"><div style="width:14px;height:14px;flex:none;border:1.5px solid rgba(32,30,29,.5)"></div><div style="flex:1;font-size:13px">Exercices — <span style="color:rgba(32,30,29,.55)">questions-conscience.pdf</span></div><div style="font-size:11px;color:rgba(32,30,29,.4)">×</div></div>
+          <div class="res-row"><div style="width:14px;height:14px;flex:none;border:1.5px solid rgba(32,30,29,.5)"></div><div style="flex:1;font-size:13px">Devoir possible — <span style="color:rgba(32,30,29,.55)">Dissertation&nbsp;: « Suis-je ce que j'ai conscience d'être&nbsp;? »</span></div><div style="font-size:11px;color:rgba(32,30,29,.4)">×</div></div>
+          <div class="res-row"><div style="width:14px;height:14px;flex:none;border:1.5px solid rgba(32,30,29,.5)"></div><div style="flex:1;font-size:13px">Lien utile — <span style="color:rgba(32,30,29,.55)">philosophie.fr/conscience</span></div><div style="font-size:11px;color:rgba(32,30,29,.4)">×</div></div>
+          <button class="btn btn-secondary" style="margin-top:4px">+ Ajouter une ressource</button>
+        </div>
+
+        <div style="margin-bottom:22px">
+          <div class="flabel">Consignes de préparation</div>
+          <div style="display:flex;gap:16px;margin-bottom:10px">
+            <div style="flex:1"><div style="font-size:12px;color:rgba(32,30,29,.65);margin-bottom:5px">Imprimer combien de jours avant&nbsp;?</div><input class="finput" value="2 jours"></div>
+            <div style="flex:1"><div style="font-size:12px;color:rgba(32,30,29,.65);margin-bottom:5px">Prévenir les élèves combien de jours avant&nbsp;?</div><input class="finput" value="1 jour"></div>
+          </div>
+          <div style="font-size:12px;color:rgba(32,30,29,.65);margin-bottom:5px">Quoi leur dire</div>
+          <textarea class="finput" style="min-height:60px;resize:vertical">Apporter le manuel, pages 42 à 58.</textarea>
+        </div>
+
+        <div>
+          <div class="flabel">Notes personnelles</div>
+          <textarea class="finput" style="min-height:70px;resize:vertical">Bien insister sur l'exemple de Freud — les TG1 avaient du mal l'an dernier avec la distinction conscience/inconscient.</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

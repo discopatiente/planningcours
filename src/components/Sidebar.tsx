@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { ChevronsLeft, ChevronsRight, LogOut } from 'lucide-react'
 import { signOut } from '../lib/auth'
 
 const CLE_STOCKAGE = 'sidebar-reduite'
@@ -22,7 +23,7 @@ function Sidebar() {
         aria-label={reduite ? 'Ouvrir la navigation' : 'Réduire la navigation'}
         title={reduite ? 'Ouvrir la navigation' : 'Réduire la navigation'}
       >
-        {reduite ? '»' : '«'}
+        {reduite ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
       </button>
       {!reduite && (
         <>
@@ -43,6 +44,7 @@ function Sidebar() {
           <NavLink to="/parametres">Paramètres</NavLink>
 
           <button type="button" className="sidebar-signout" onClick={() => signOut()}>
+            <LogOut size={14} />
             Se déconnecter
           </button>
         </>

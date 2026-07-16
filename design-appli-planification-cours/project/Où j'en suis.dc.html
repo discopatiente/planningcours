@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&amp;display=swap">
+<style>
+  body{margin:0;background:#e4e2e1;font-family:"Archivo",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .sw-nav{padding:8px 8px;border-left:2px solid transparent;color:rgba(32,30,29,.8);font-size:14px}
+  .sw-kicker{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(32,30,29,.5);margin:0 0 8px 8px}
+  .prow{display:flex;align-items:center;gap:20px;padding:16px 8px;border-bottom:1px solid rgba(32,30,29,.12)}
+  .pchip{flex:1;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border-right:2px solid #f3f2f2}
+  .pchip:last-child{border-right:none}
+</style>
+</helmet>
+<div style="display:flex;align-items:stretch;min-height:900px;width:1600px;background:#f3f2f2">
+
+  <div style="width:232px;flex:none;background:#eae9e9;border-right:2px solid rgba(32,30,29,.4);padding:22px 18px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:18px;height:18px;background:#ec3013;flex:none"></div>
+      <div style="font-weight:800;font-size:17px;letter-spacing:-.01em">Semainier</div>
+    </div>
+    <div>
+      <div class="sw-kicker">Consulter</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div class="sw-nav">Semaine</div>
+        <div class="sw-nav">Devoirs</div>
+        <div class="sw-nav">Élèves</div>
+        <div style="display:flex;align-items:center;padding:8px 8px;border-left:2px solid #ec3013;color:#ec3013;font-size:14px;font-weight:600;background:#fff2ef">Où j'en suis</div>
+      </div>
+    </div>
+    <div>
+      <div class="sw-kicker">Construire</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <div class="sw-nav">Unités de cours</div>
+        <div class="sw-nav">Chapitres</div>
+        <div class="sw-nav">Progressions</div>
+      </div>
+    </div>
+    <div>
+      <div class="sw-kicker">Régler</div>
+      <div class="sw-nav">Paramètres</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 32px;border-bottom:2px solid rgba(32,30,29,.4)">
+      <div style="display:flex;align-items:baseline;gap:14px">
+        <div style="font-family:Archivo;font-weight:800;font-size:28px;letter-spacing:-.01em">Où j'en suis</div>
+        <div style="font-size:14px;color:rgba(32,30,29,.6)">Toutes les classes · année 2025–2026</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(32,30,29,.7)"><div style="width:8px;height:8px;background:rgba(32,30,29,.3)"></div>Fait</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(32,30,29,.7)"><div style="width:8px;height:8px;background:#201e1d"></div>En cours</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(32,30,29,.7)"><div style="width:8px;height:8px;background:#d7d3d3"></div>À venir</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(32,30,29,.7)"><div style="width:8px;height:8px;background:#ec3013"></div>En retard</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:20px;padding:12px 32px;border-bottom:2px solid rgba(32,30,29,.4);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:rgba(32,30,29,.5)">
+      <div style="width:120px;flex:none">Classe</div>
+      <div style="flex:1;min-width:0">Progression des chapitres</div>
+      <div style="width:220px;flex:none">Chapitre en cours</div>
+      <div style="width:160px;flex:none">Avancement</div>
+    </div>
+
+    <div style="padding:0 32px">
+
+      <!-- TG1 - Philo - dans les temps -->
+      <div class="prow">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">TG1</div><div style="font-size:11px;color:#4a3170;background:#eae6f2;display:inline-block;padding:2px 6px;margin-top:3px">Philo</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#7c5cc4;color:#f8f4f4">1</div>
+          <div class="pchip" style="background:#7c5cc4;color:#f8f4f4">2</div>
+          <div class="pchip" style="background:#7c5cc4;color:#f8f4f4">3</div>
+          <div class="pchip" style="background:#eae6f2;color:#4a3170;border:2px solid #7c5cc4;font-weight:800">4</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">5</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">6</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">7</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">4 · La religion</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">43%</div><div style="font-size:11px;color:rgba(32,30,29,.55)">Dans les temps</div></div>
+      </div>
+
+      <!-- TG2 - Philo - en retard -->
+      <div class="prow">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">TG2</div><div style="font-size:11px;color:#4a3170;background:#eae6f2;display:inline-block;padding:2px 6px;margin-top:3px">Philo</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#7c5cc4;color:#f8f4f4">1</div>
+          <div class="pchip" style="background:#7c5cc4;color:#f8f4f4">2</div>
+          <div class="pchip" style="background:#eae6f2;color:#4a3170;border:2px solid #7c5cc4;font-weight:800">3</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">4</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">5</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">6</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">7</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">3 · La liberté</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">29%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#7c1405;font-weight:600"><div style="width:6px;height:6px;background:#ec3013;flex:none"></div>En retard de 2 séances</div></div>
+      </div>
+
+      <!-- 1G3 - HLP - dans les temps -->
+      <div class="prow">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">1G3</div><div style="font-size:11px;color:#2c4a75;background:#e8edf5;display:inline-block;padding:2px 6px;margin-top:3px">HLP</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#3d6fae;color:#f8f4f4">1</div>
+          <div class="pchip" style="background:#e8edf5;color:#2c4a75;border:2px solid #3d6fae;font-weight:800">2</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">3</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">4</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">5</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">6</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">2 · Le roman</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">17%</div><div style="font-size:11px;color:rgba(32,30,29,.55)">Dans les temps</div></div>
+      </div>
+
+      <!-- 1G4 - EMC - en retard -->
+      <div class="prow">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">1G4</div><div style="font-size:11px;color:#1f5c50;background:#e3f0ec;display:inline-block;padding:2px 6px;margin-top:3px">EMC</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#e3f0ec;color:#1f5c50;border:2px solid #2f8f7d;font-weight:800">1</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">2</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">3</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">4</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">1 · La liberté d'expression</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">0%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#7c1405;font-weight:600"><div style="width:6px;height:6px;background:#ec3013;flex:none"></div>En retard de 1 séance</div></div>
+      </div>
+
+      <!-- 2G5 - SNT - dans les temps -->
+      <div class="prow">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">2G5</div><div style="font-size:11px;color:#5c4f18;background:#f5f0dc;display:inline-block;padding:2px 6px;margin-top:3px">SNT</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">1</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">2</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">3</div>
+          <div class="pchip" style="background:#f5f0dc;color:#5c4f18;border:2px solid #9c8a2e;font-weight:800">4</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">5</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">6</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">7</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">4 · Sécurité et données</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">43%</div><div style="font-size:11px;color:rgba(32,30,29,.55)">Dans les temps</div></div>
+      </div>
+
+      <!-- 2G6 - EMC - dans les temps -->
+      <div class="prow">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">2G6</div><div style="font-size:11px;color:#1f5c50;background:#e3f0ec;display:inline-block;padding:2px 6px;margin-top:3px">EMC</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#2f8f7d;color:#f8f4f4">1</div>
+          <div class="pchip" style="background:#e3f0ec;color:#1f5c50;border:2px solid #2f8f7d;font-weight:800">2</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">3</div>
+          <div class="pchip" style="background:#eae7e7;color:#605d5d">4</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">2 · Égalité femmes-hommes</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">25%</div><div style="font-size:11px;color:rgba(32,30,29,.55)">Dans les temps</div></div>
+      </div>
+
+      <!-- 2G7 - SNT - dans les temps, avancé -->
+      <div class="prow" style="border-bottom:none">
+        <div style="width:120px;flex:none"><div style="font-size:14px;font-weight:700">2G7</div><div style="font-size:11px;color:#5c4f18;background:#f5f0dc;display:inline-block;padding:2px 6px;margin-top:3px">SNT</div></div>
+        <div style="flex:1;min-width:0;display:flex">
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">1</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">2</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">3</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">4</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">5</div>
+          <div class="pchip" style="background:#9c8a2e;color:#f8f4f4">6</div>
+          <div class="pchip" style="background:#f5f0dc;color:#5c4f18;border:2px solid #9c8a2e;font-weight:800">7</div>
+        </div>
+        <div style="width:220px;flex:none;font-size:13px;font-weight:600">7 · Impact environnemental</div>
+        <div style="width:160px;flex:none"><div style="font-size:13px;font-weight:700">86%</div><div style="font-size:11px;color:rgba(32,30,29,.55)">Dans les temps</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

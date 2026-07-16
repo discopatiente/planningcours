@@ -353,12 +353,8 @@ function Semaine() {
       ) : (
         !loading &&
         (vue === 'liste' ? (
+          <div className="semaine-liste-layout">
           <div className="semaine-jours-wrapper">
-            <AlertesPreparation
-              impressions={alertesImpression}
-              distributions={alertesDistribution}
-              instructions={alertesInstructions}
-            />
             <div className="semaine-jours">
             {jours.map((jour, index) => {
               const periode = periodeParJour.get(jour)
@@ -423,6 +419,25 @@ function Semaine() {
               )
             })}
             </div>
+          </div>
+          <div className="semaine-rail">
+            <AlertesPreparation
+              impressions={alertesImpression}
+              distributions={alertesDistribution}
+              instructions={alertesInstructions}
+            />
+            <div>
+              <div className="semaine-rail-kicker">Matières</div>
+              <div className="semaine-rail-legende">
+                {matieres.map((matiere) => (
+                  <div className="semaine-rail-legende-item" key={matiere.id}>
+                    <span className="referentiel-group-dot" style={{ background: matiere.couleur }} />
+                    {matiere.nom}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
           </div>
         ) : (
           <div className="calendrier-wrapper">

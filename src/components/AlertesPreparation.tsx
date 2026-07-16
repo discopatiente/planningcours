@@ -1,3 +1,5 @@
+import { Megaphone, Package, Printer } from 'lucide-react'
+
 interface AlerteImpressionAffichage {
   id: string
   dateSeance: string
@@ -27,67 +29,61 @@ interface AlertesPreparationProps {
   instructions: AlerteInstructionAffichage[]
 }
 
+type AlerteFusionnee =
+  | { type: 'impression'; item: AlerteImpressionAffichage }
+  | { type: 'distribution'; item: AlerteDistributionAffichage }
+  | { type: 'instruction'; item: AlerteInstructionAffichage }
+
+const LIBELLES: Record<AlerteFusionnee['type'], string> = {
+  impression: 'Impression à faire',
+  distribution: 'Document à distribuer',
+  instruction: 'Instruction aux élèves',
+}
+
+const ICONES: Record<AlerteFusionnee['type'], typeof Printer> = {
+  impression: Printer,
+  distribution: Package,
+  instruction: Megaphone,
+}
+
 function formatDateCourte(dateStr: string) {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 function AlertesPreparation({ impressions, distributions, instructions }: AlertesPreparationProps) {
-  if (impressions.length === 0 && distributions.length === 0 && instructions.length === 0) return null
+  const alertes: AlerteFusionnee[] = [
+    ...impressions.map((item): AlerteFusionnee => ({ type: 'impression', item })),
+    ...distributions.map((item): AlerteFusionnee => ({ type: 'distribution', item })),
+    ...instructions.map((item): AlerteFusionnee => ({ type: 'instruction', item })),
+  ].sort((a, b) => a.item.dateSeance.localeCompare(b.item.dateSeance))
+
+  if (alertes.length === 0) return null
 
   return (
-    <div className="alertes-bar">
-      {impressions.length > 0 && (
-        <div className="alertes-section">
-          <span className="alertes-titre">🖨️ Impressions à faire cette semaine ({impressions.length})</span>
-          <ul className="alertes-liste">
-            {impressions.map((a) => (
-              <li key={a.id} className="alertes-item">
-                <span className="alertes-item-date">{formatDateCourte(a.dateSeance)}</span>
-                <span>
-                  {a.titre} — {a.classeNom}
-                </span>
-                {a.ressourceUrl && (
-                  <a href={a.ressourceUrl} target="_blank" rel="noreferrer">
-                    ↗ Ouvrir
+    <div>
+      <div className="semaine-rail-kicker">Alertes de la semaine ({alertes.length})</div>
+      <div className="alertes-liste">
+        {alertes.map((alerte) => {
+          const Icone = ICONES[alerte.type]
+          return (
+            <div className="alertes-item" key={`${alerte.type}-${alerte.item.id}`}>
+              <Icone size={15} className="alertes-item-icone" />
+              <div className="alertes-item-corps">
+                <div className="alertes-item-titre">{LIBELLES[alerte.type]}</div>
+                <div className="alertes-item-detail">
+                  {formatDateCourte(alerte.item.dateSeance)} · {alerte.item.titre} · {alerte.item.classeNom}
+                  {alerte.type === 'instruction' && ` : ${alerte.item.instruction}`}
+                </div>
+                {alerte.type === 'impression' && alerte.item.ressourceUrl && (
+                  <a href={alerte.item.ressourceUrl} target="_blank" rel="noreferrer">
+                    Ouvrir ↗
                   </a>
                 )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {distributions.length > 0 && (
-        <div className="alertes-section">
-          <span className="alertes-titre">📦 Documents à distribuer cette semaine ({distributions.length})</span>
-          <ul className="alertes-liste">
-            {distributions.map((a) => (
-              <li key={a.id} className="alertes-item">
-                <span className="alertes-item-date">{formatDateCourte(a.dateSeance)}</span>
-                <span>
-                  {a.titre} — {a.classeNom}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {instructions.length > 0 && (
-        <div className="alertes-section">
-          <span className="alertes-titre">📣 Instructions élèves à transmettre cette semaine ({instructions.length})</span>
-          <ul className="alertes-liste">
-            {instructions.map((a) => (
-              <li key={a.id} className="alertes-item">
-                <span className="alertes-item-date">{formatDateCourte(a.dateSeance)}</span>
-                <span>
-                  {a.titre} — {a.classeNom} : {a.instruction}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

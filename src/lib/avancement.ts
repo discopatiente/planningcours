@@ -14,14 +14,20 @@ export interface BlocChapitreAvancement {
 
 export interface AvancementPlanning {
   blocs: BlocChapitreAvancement[]
-  positionLabel: string
+  pourcentage: number
+  chapitreEnCoursNumero: number | null
+  chapitreEnCoursNom: string | null
+  statutTexte: string
   enRetard: boolean
   nbSeancesRetard: number
 }
 
 const AVANCEMENT_VIDE: AvancementPlanning = {
   blocs: [],
-  positionLabel: 'Aucune progression assignée.',
+  pourcentage: 0,
+  chapitreEnCoursNumero: null,
+  chapitreEnCoursNom: null,
+  statutTexte: 'Aucune progression assignée',
   enRetard: false,
   nbSeancesRetard: 0,
 }
@@ -29,11 +35,11 @@ const AVANCEMENT_VIDE: AvancementPlanning = {
 /**
  * Calcule l'état d'avancement d'un planning (classe + progression) pour le
  * tableau de bord « Où j'en suis » : découpage en blocs de chapitres avec
- * leur statut visuel, et une phrase de position. La position courante est la
- * première unité de la progression pas encore `fait` — y compris une unité
- * jamais placée faute de créneau (débordement), traitée comme « à venir ».
- * Le retard se lit sur les séances déjà passées mais toujours `a_venir` :
- * l'enseignant n'a pas encore avancé jusque-là.
+ * leur statut visuel, un pourcentage et le chapitre courant. La position
+ * courante est la première unité de la progression pas encore `fait` — y
+ * compris une unité jamais placée faute de créneau (débordement), traitée
+ * comme « à venir ». Le retard se lit sur les séances déjà passées mais
+ * toujours `a_venir` : l'enseignant n'a pas encore avancé jusque-là.
  */
 export function calculerAvancement(
   progressionUnites: ProgressionUnite[],
@@ -56,32 +62,36 @@ export function calculerAvancement(
   )
 
   let indexDebut = 0
-  const blocs: BlocChapitreAvancement[] = groupes.map((g) => {
+  let chapitreEnCoursNumero: number | null = null
+  let chapitreEnCoursNom: string | null = null
+  const blocs: BlocChapitreAvancement[] = groupes.map((g, i) => {
     const indexFin = indexDebut + g.entrees.length - 1
     let statut: StatutBlocChapitre
     if (indexUniteCourante === -1 || indexFin < indexUniteCourante) statut = 'termine'
     else if (indexDebut <= indexUniteCourante) statut = 'en_cours'
     else statut = 'a_venir'
+    if (statut === 'en_cours') {
+      chapitreEnCoursNumero = i + 1
+      chapitreEnCoursNom = g.chapitreNom
+    }
     indexDebut = indexFin + 1
     return { id: g.cle, nom: g.chapitreNom, nbUnites: g.entrees.length, statut }
   })
 
+  const pourcentage =
+    indexUniteCourante === -1 ? 100 : Math.round((indexUniteCourante / progressionUnites.length) * 100)
+
   const nbSeancesRetard = seancesPlanning.filter((s) => s.statut === 'a_venir' && s.date < aujourdhui).length
   const enRetard = nbSeancesRetard > 0
 
-  let positionLabel: string
-  if (indexUniteCourante === -1) {
-    positionLabel = 'Progression terminée.'
-  } else {
-    const uniteCourante = progressionUnites[indexUniteCourante]
-    const chapitreNom = uniteCourante.unite.chapitre?.nom ?? 'Sans chapitre'
-    const statutTxt = enRetard
-      ? `en retard (${nbSeancesRetard} séance${nbSeancesRetard > 1 ? 's' : ''} passée${nbSeancesRetard > 1 ? 's' : ''} non faite${nbSeancesRetard > 1 ? 's' : ''})`
-      : 'dans les temps'
-    positionLabel = `${uniteCourante.unite.titre} (${chapitreNom}) — ${statutTxt}`
-  }
+  const statutTexte =
+    indexUniteCourante === -1
+      ? 'Progression terminée'
+      : enRetard
+        ? `En retard de ${nbSeancesRetard} séance${nbSeancesRetard > 1 ? 's' : ''}`
+        : 'Dans les temps'
 
-  return { blocs, positionLabel, enRetard, nbSeancesRetard }
+  return { blocs, pourcentage, chapitreEnCoursNumero, chapitreEnCoursNom, statutTexte, enRetard, nbSeancesRetard }
 }
 
 export interface SemaineAnnee {
