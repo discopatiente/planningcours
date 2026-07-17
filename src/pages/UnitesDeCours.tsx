@@ -69,6 +69,10 @@ function UnitesDeCours() {
   const [nouveauNecessiteImpression, setNouveauNecessiteImpression] = useState(
     IMPRIMABLE_PAR_DEFAUT_SELON_TYPE.support,
   )
+  // Tant que l'utilisateur n'a pas coché/décoché "À imprimer" lui-même, la
+  // case suit la valeur par défaut du type choisi ; une fois touchée
+  // manuellement, un changement de type ne l'écrase plus.
+  const [nouveauNecessiteImpressionTouche, setNouveauNecessiteImpressionTouche] = useState(false)
   const [indexDragRessource, setIndexDragRessource] = useState<number | null>(null)
   const [indexSurvolRessource, setIndexSurvolRessource] = useState<number | null>(null)
 
@@ -311,6 +315,7 @@ function UnitesDeCours() {
     setNouvelleUrlRessource('')
     setNouveauTypeRessource('support')
     setNouveauNecessiteImpression(IMPRIMABLE_PAR_DEFAUT_SELON_TYPE.support)
+    setNouveauNecessiteImpressionTouche(false)
     setNouvelleRessourceOuverte(false)
   }
 
@@ -899,7 +904,9 @@ function UnitesDeCours() {
               onChange={(e) => {
                 const type = e.target.value as TypeRessource
                 setNouveauTypeRessource(type)
-                setNouveauNecessiteImpression(IMPRIMABLE_PAR_DEFAUT_SELON_TYPE[type])
+                if (!nouveauNecessiteImpressionTouche) {
+                  setNouveauNecessiteImpression(IMPRIMABLE_PAR_DEFAUT_SELON_TYPE[type])
+                }
               }}
             >
               {Object.entries(LIBELLES_TYPE_RESSOURCE).map(([valeur, libelle]) => (
@@ -913,7 +920,10 @@ function UnitesDeCours() {
             <input
               type="checkbox"
               checked={nouveauNecessiteImpression}
-              onChange={(e) => setNouveauNecessiteImpression(e.target.checked)}
+              onChange={(e) => {
+                setNouveauNecessiteImpression(e.target.checked)
+                setNouveauNecessiteImpressionTouche(true)
+              }}
             />
             À imprimer
           </label>

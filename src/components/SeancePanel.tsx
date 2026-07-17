@@ -87,6 +87,14 @@ function SeancePanel({
   )
   const [savingRattrapages, setSavingRattrapages] = useState(false)
 
+  const groupesRessources = [
+    { titre: 'À imprimer et distribuer', liste: (ressources ?? []).filter((r) => r.necessite_impression) },
+    {
+      titre: 'Autre usage (projection, consultation en ligne…)',
+      liste: (ressources ?? []).filter((r) => !r.necessite_impression),
+    },
+  ]
+
   return (
     <Modal title={titre} onClose={onClose} wide>
       <div className="seance-panel-meta">
@@ -116,44 +124,24 @@ function SeancePanel({
             </label>
           )}
 
-          {ressources && ressources.length > 0 && (() => {
-            const aImprimer = ressources.filter((r) => r.necessite_impression)
-            const autreUsage = ressources.filter((r) => !r.necessite_impression)
-            return (
-              <>
-                {aImprimer.length > 0 && (
-                  <div className="modal-field-group">
-                    <span className="modal-field-title">À imprimer et distribuer</span>
-                    <div className="seance-panel-ressources-groupe">
-                      {aImprimer.map((r) => (
-                        <div className="seance-panel-ressource-ligne" key={r.id}>
-                          <span className="seance-panel-ressource-type">{LIBELLES_TYPE_RESSOURCE[r.type]}</span>
-                          <a href={r.url} target="_blank" rel="noreferrer">
-                            {r.libelle || LIBELLES_TYPE_RESSOURCE[r.type]} ↗
-                          </a>
-                        </div>
-                      ))}
-                    </div>
+          {groupesRessources.map(
+            ({ titre, liste }) =>
+              liste.length > 0 && (
+                <div className="modal-field-group" key={titre}>
+                  <span className="modal-field-title">{titre}</span>
+                  <div className="seance-panel-ressources-groupe">
+                    {liste.map((r) => (
+                      <div className="seance-panel-ressource-ligne" key={r.id}>
+                        <span className="seance-panel-ressource-type">{LIBELLES_TYPE_RESSOURCE[r.type]}</span>
+                        <a href={r.url} target="_blank" rel="noreferrer">
+                          {r.libelle || LIBELLES_TYPE_RESSOURCE[r.type]} ↗
+                        </a>
+                      </div>
+                    ))}
                   </div>
-                )}
-                {autreUsage.length > 0 && (
-                  <div className="modal-field-group">
-                    <span className="modal-field-title">Autre usage (projection, consultation en ligne…)</span>
-                    <div className="seance-panel-ressources-groupe">
-                      {autreUsage.map((r) => (
-                        <div className="seance-panel-ressource-ligne" key={r.id}>
-                          <span className="seance-panel-ressource-type">{LIBELLES_TYPE_RESSOURCE[r.type]}</span>
-                          <a href={r.url} target="_blank" rel="noreferrer">
-                            {r.libelle || LIBELLES_TYPE_RESSOURCE[r.type]} ↗
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )
-          })()}
+                </div>
+              ),
+          )}
 
           {estEvaluation && presences && presences.length > 0 && onEnregistrerPresences && (
             <div className="modal-field-group">

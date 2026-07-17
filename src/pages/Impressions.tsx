@@ -35,8 +35,6 @@ interface LigneImpression {
   ressourceUrl: string
 }
 
-type LigneDistribution = LigneImpression
-
 function Impressions() {
   const { annees } = useAnneesScolaires()
   const anneeActive = annees.find((a) => a.active) ?? null
@@ -57,8 +55,9 @@ function Impressions() {
   // Fenêtre "semaine en cours + semaine suivante" utilisée par la synthèse
   // mobile — du lundi de la semaine courante au vendredi de la semaine
   // suivante, contrairement à la checklist desktop qui n'a pas de borne.
-  const lunditFenetre = toISODate(lundiDeLaSemaine(toISODate(new Date())))
-  const vendrediFenetre = toISODate(ajouterJours(lundiDeLaSemaine(toISODate(new Date())), 11))
+  const lundiCourant = lundiDeLaSemaine(toISODate(new Date()))
+  const lunditFenetre = toISODate(lundiCourant)
+  const vendrediFenetre = toISODate(ajouterJours(lundiCourant, 11))
 
   const classesParId = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes])
   const progressionsParId = useMemo(() => new Map(progressions.map((p) => [p.id, p])), [progressions])
@@ -126,59 +125,43 @@ function Impressions() {
     [lignes, lunditFenetre, vendrediFenetre, getEtat],
   )
 
+  // Dérivé de `lignes` (déjà construit ci-dessus) plutôt que reparcouru
+  // depuis `seances` : évite de refaire la jointure unité/matière/classe.
   const lignesDistributionMobile = useMemo(() => {
-    const resultat: LigneDistribution[] = []
-    for (const s of seances) {
-      if (s.statut === 'annulee' || !s.unite_id) continue
-      if (s.date < lunditFenetre || s.date > vendrediFenetre) continue
-      const ressourcesUnite = ressourcesImprimablesParUnite.get(s.unite_id) ?? []
-      if (ressourcesUnite.length === 0) continue
-      const toutesImprimees = ressourcesUnite.every((r) => getEtat(s.id, r.id).imprime)
+    const parSeance = new Map<string, LigneImpression[]>()
+    for (const l of lignes) {
+      const liste = parSeance.get(l.seanceId) ?? []
+      liste.push(l)
+      parSeance.set(l.seanceId, liste)
+    }
+    const resultat: LigneImpression[] = []
+    for (const lignesSeance of parSeance.values()) {
+      const { date } = lignesSeance[0]
+      if (date < lunditFenetre || date > vendrediFenetre) continue
+      const toutesImprimees = lignesSeance.every((l) => getEtat(l.seanceId, l.ressourceId).imprime)
       if (!toutesImprimees) continue
-      const unite = unitesParId.get(s.unite_id)
-      const progression = progressionsParId.get(s.planning.progression_id)
-      const matiere = progression ? matieresParId.get(progression.matiere_id) : undefined
-      const classe = classesParId.get(s.planning.classe_id)
-      for (const r of ressourcesUnite) {
-        if (getEtat(s.id, r.id).distribue) continue
-        resultat.push({
-          seanceId: s.id,
-          ressourceId: r.id,
-          date: s.date,
-          titreUnite: s.override_titre ?? unite?.titre ?? '(unité supprimée)',
-          classeNom: classe?.nom ?? '?',
-          matiereNom: matiere?.nom ?? '?',
-          matiereCouleur: matiere?.couleur ?? '#999',
-          ressourceType: r.type,
-          ressourceLibelle: r.libelle,
-          ressourceUrl: r.url,
-        })
+      for (const l of lignesSeance) {
+        if (getEtat(l.seanceId, l.ressourceId).distribue) continue
+        resultat.push(l)
       }
     }
     resultat.sort((a, b) => a.date.localeCompare(b.date))
     return resultat
-  }, [
-    seances,
-    unitesParId,
-    progressionsParId,
-    matieresParId,
-    classesParId,
-    ressourcesImprimablesParUnite,
-    getEtat,
-    lunditFenetre,
-    vendrediFenetre,
-  ])
+  }, [lignes, getEtat, lunditFenetre, vendrediFenetre])
 
   const alertesInstructionsMobile = useMemo(() => {
     if (!anneeActive) return []
-    return calculerAlertesInstructionsEleves(seances, unitesParId, lunditFenetre, vendrediFenetre).map((a) => ({
+    // Borne basse = aujourd'hui (comme le bloc desktop, ligne 108) et non
+    // lunditFenetre : ces alertes n'ont pas d'état persistant, une échéance
+    // déjà passée doit sortir de la liste plutôt que réapparaître.
+    return calculerAlertesInstructionsEleves(seances, unitesParId, toISODate(new Date()), vendrediFenetre).map((a) => ({
       id: a.seance.id,
       dateEcheance: a.dateEcheance,
       titre: a.titre,
       classeNom: classesParId.get(a.seance.planning.classe_id)?.nom ?? '?',
       instruction: a.instruction,
     }))
-  }, [seances, unitesParId, anneeActive, classesParId, lunditFenetre, vendrediFenetre])
+  }, [seances, unitesParId, anneeActive, classesParId, vendrediFenetre])
 
   const loading = loadingSeances || loadingEtats
 
