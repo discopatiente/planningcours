@@ -19,6 +19,7 @@ export interface ContexteItemsJour {
   unitesParId: Map<string, Unite>
   chapitresParId: Map<string, Chapitre>
   ressourcePrincipaleParUnite: Map<string, Ressource>
+  ressourcesParUnite: Map<string, Ressource[]>
 }
 
 export function formatHeure(heure: string): string {
@@ -35,6 +36,19 @@ export function construireRessourcePrincipaleParUnite(ressources: Ressource[]): 
     if (!existante || (existante.type !== 'support' && r.type === 'support')) {
       map.set(r.unite_id, r)
     }
+  }
+  return map
+}
+
+// Toutes les ressources d'une unité, triées par `ordre` — contrairement à
+// construireRessourcePrincipaleParUnite qui n'en garde qu'une, sert à la
+// modale de détail d'une séance qui doit lister l'ensemble.
+export function construireRessourcesParUnite(ressources: Ressource[]): Map<string, Ressource[]> {
+  const map = new Map<string, Ressource[]>()
+  for (const r of [...ressources].sort((a, b) => a.ordre - b.ordre)) {
+    const liste = map.get(r.unite_id) ?? []
+    liste.push(r)
+    map.set(r.unite_id, liste)
   }
   return map
 }
@@ -65,8 +79,9 @@ export function detailsItem(item: ItemJour, ctx: ContexteItemsJour, seancesDuPla
       ? libelleTrou(seance!.motif_annulation)
       : titreAvecDebordement(seance!, ctx.unitesParId.get(seance!.unite_id ?? ''), seancesDuPlanning, ctx.unitesParId)
   const ressource = !estEvaluation ? ctx.ressourcePrincipaleParUnite.get(seance!.unite_id ?? '') : undefined
+  const ressourcesUnite = !estEvaluation ? ctx.ressourcesParUnite.get(seance!.unite_id ?? '') ?? [] : []
   const unite = !estEvaluation && !estTrou ? ctx.unitesParId.get(seance!.unite_id ?? '') : undefined
   const chapitre = unite?.chapitre_id ? ctx.chapitresParId.get(unite.chapitre_id) : undefined
   const titreChapitre = chapitre ? chapitre.titre_court || chapitre.nom : undefined
-  return { classe, matiere, estEvaluation, titre, ressource, titreChapitre }
+  return { classe, matiere, estEvaluation, titre, ressource, ressourcesUnite, titreChapitre }
 }

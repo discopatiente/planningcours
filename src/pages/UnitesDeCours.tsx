@@ -8,7 +8,7 @@ import { useAnneesScolaires } from '../hooks/useAnneesScolaires'
 import { useClasses } from '../hooks/useClasses'
 import { useInstancesUnite } from '../hooks/useInstancesUnite'
 import Modal from '../components/Modal'
-import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
+import { IMPRIMABLE_PAR_DEFAUT_SELON_TYPE, LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
 import { importerUnites, parseCsvUnites, type ResultatImportUnites, type SeparateurCsv } from '../lib/importUnites'
 import { messageErreur } from '../lib/erreurs'
 import type { Unite } from '../types/unite'
@@ -66,6 +66,9 @@ function UnitesDeCours() {
   const [nouveauTypeRessource, setNouveauTypeRessource] = useState<TypeRessource>('support')
   const [nouveauLibelleRessource, setNouveauLibelleRessource] = useState('')
   const [nouvelleUrlRessource, setNouvelleUrlRessource] = useState('')
+  const [nouveauNecessiteImpression, setNouveauNecessiteImpression] = useState(
+    IMPRIMABLE_PAR_DEFAUT_SELON_TYPE.support,
+  )
   const [indexDragRessource, setIndexDragRessource] = useState<number | null>(null)
   const [indexSurvolRessource, setIndexSurvolRessource] = useState<number | null>(null)
 
@@ -303,10 +306,11 @@ function UnitesDeCours() {
   async function handleCreerRessource() {
     const url = nouvelleUrlRessource.trim()
     if (!url) return
-    await ajouterRessource(nouveauTypeRessource, url, nouveauLibelleRessource.trim() || null)
+    await ajouterRessource(nouveauTypeRessource, url, nouveauLibelleRessource.trim() || null, nouveauNecessiteImpression)
     setNouveauLibelleRessource('')
     setNouvelleUrlRessource('')
     setNouveauTypeRessource('support')
+    setNouveauNecessiteImpression(IMPRIMABLE_PAR_DEFAUT_SELON_TYPE.support)
     setNouvelleRessourceOuverte(false)
   }
 
@@ -645,6 +649,18 @@ function UnitesDeCours() {
                                                 ),
                                               )}
                                             </select>
+                                            <label className="modal-field-inline ressource-imprimable-toggle">
+                                              <input
+                                                type="checkbox"
+                                                checked={ressource.necessite_impression}
+                                                onChange={(e) =>
+                                                  editerRessource(ressource.id, {
+                                                    necessite_impression: e.target.checked,
+                                                  })
+                                                }
+                                              />
+                                              À imprimer
+                                            </label>
                                             <div className="ressource-fields">
                                               <input
                                                 type="text"
@@ -880,7 +896,11 @@ function UnitesDeCours() {
             Type
             <select
               value={nouveauTypeRessource}
-              onChange={(e) => setNouveauTypeRessource(e.target.value as TypeRessource)}
+              onChange={(e) => {
+                const type = e.target.value as TypeRessource
+                setNouveauTypeRessource(type)
+                setNouveauNecessiteImpression(IMPRIMABLE_PAR_DEFAUT_SELON_TYPE[type])
+              }}
             >
               {Object.entries(LIBELLES_TYPE_RESSOURCE).map(([valeur, libelle]) => (
                 <option key={valeur} value={valeur}>
@@ -888,6 +908,14 @@ function UnitesDeCours() {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="modal-field-inline">
+            <input
+              type="checkbox"
+              checked={nouveauNecessiteImpression}
+              onChange={(e) => setNouveauNecessiteImpression(e.target.checked)}
+            />
+            À imprimer
           </label>
           <label className="modal-field">
             Libellé (optionnel)

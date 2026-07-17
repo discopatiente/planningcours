@@ -9,6 +9,17 @@ export const LIBELLES_TYPE_RESSOURCE: Record<TypeRessource, string> = {
   lien_utile: 'Lien utile',
 }
 
+// Valeur par défaut de `necessite_impression` selon le type, appliquée à la
+// création d'une ressource — modifiable ensuite au cas par cas (ex. un
+// support PDF prévu uniquement pour être projeté au tableau).
+export const IMPRIMABLE_PAR_DEFAUT_SELON_TYPE: Record<TypeRessource, boolean> = {
+  support: true,
+  video: false,
+  exercice: true,
+  devoir_possible: true,
+  lien_utile: false,
+}
+
 export async function fetchRessources(uniteId: string): Promise<Ressource[]> {
   const { data, error } = await supabase
     .from('ressources')
@@ -33,6 +44,7 @@ export async function createRessource(
   type: TypeRessource,
   url: string,
   libelle: string | null,
+  necessiteImpression: boolean = IMPRIMABLE_PAR_DEFAUT_SELON_TYPE[type],
 ): Promise<Ressource> {
   const { count, error: countError } = await supabase
     .from('ressources')
@@ -42,7 +54,14 @@ export async function createRessource(
 
   const { data, error } = await supabase
     .from('ressources')
-    .insert({ unite_id: uniteId, type, url, libelle, ordre: (count ?? 0) + 1 })
+    .insert({
+      unite_id: uniteId,
+      type,
+      url,
+      libelle,
+      ordre: (count ?? 0) + 1,
+      necessite_impression: necessiteImpression,
+    })
     .select()
     .single()
   if (error) throw error
@@ -51,7 +70,7 @@ export async function createRessource(
 
 export async function updateRessource(
   id: string,
-  changes: Partial<Pick<Ressource, 'type' | 'libelle' | 'url'>>,
+  changes: Partial<Pick<Ressource, 'type' | 'libelle' | 'url' | 'necessite_impression'>>,
 ): Promise<Ressource> {
   const { data, error } = await supabase
     .from('ressources')

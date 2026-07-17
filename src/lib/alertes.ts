@@ -28,11 +28,10 @@ function seancesActives(seances: SeanceAvecPlanning[]): SeanceAvecPlanning[] {
   return seances.filter((s) => s.statut === 'a_venir' || s.statut === 'deplacee')
 }
 
-// Ressources physiquement imprimées/distribuées de la séance (typées support,
-// exercice, devoir_possible — voir TYPES_RESSOURCES_IMPRIMABLES). Une unité
-// sans aucune ressource de ce type n'a rien à cocher : on ne peut pas
-// considérer l'impression « faite », donc l'alerte reste pilotée par le
-// délai seul dans ce cas.
+// Ressources physiquement imprimées/distribuées de la séance (celles dont
+// `necessite_impression` est vrai). Une unité sans aucune ressource de ce
+// type n'a rien à cocher : on ne peut pas considérer l'impression « faite »,
+// donc l'alerte reste pilotée par le délai seul dans ce cas.
 function ressourcesImprimablesSeance(
   seance: SeanceAvecPlanning,
   ressourcesParUnite: Map<string, Ressource[]>,
@@ -74,12 +73,17 @@ export function calculerAlertesImpression(
   vendredi: string,
   ressourcesParUnite: Map<string, Ressource[]>,
   etats: Map<string, EtatRessourceSeance>,
+  delaiParDefaut: number | null,
 ): AlertePreparation[] {
   const resultat: AlertePreparation[] = []
   for (const s of seancesActives(seances)) {
     if (toutesRessourcesImprimees(s, ressourcesParUnite, etats)) continue
     const unite = s.unite_id ? unitesParId.get(s.unite_id) : undefined
-    const delai = s.override_delai_impression_jours ?? unite?.delai_impression_jours ?? null
+    // Secours : sans delai_impression_jours propre à l'unité ni override, on
+    // retombe sur le délai par défaut des Paramètres plutôt que de ne
+    // générer aucune alerte — avant ce secours, une unité jamais configurée
+    // n'émettait jamais d'alerte, silencieusement.
+    const delai = s.override_delai_impression_jours ?? unite?.delai_impression_jours ?? delaiParDefaut ?? null
     if (delai === null) continue
     const echeance = dateEcheance(s.date, delai)
     if (echeance < lundi || echeance > vendredi) continue

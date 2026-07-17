@@ -9,11 +9,12 @@ import { useChapitres } from '../hooks/useChapitres'
 import { useRessourcesToutes } from '../hooks/useRessourcesToutes'
 import { useSemaine } from '../hooks/useSemaine'
 import { useImpressions } from '../hooks/useImpressions'
+import { useParametres } from '../hooks/useParametres'
 import { ajouterJours, parseISODate, toISODate } from '../lib/dates'
 import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
 import { construireRessourcesImprimablesParUnite } from '../lib/impressions'
 import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
-import { construireRessourcePrincipaleParUnite, detailsItem, formatHeure } from '../lib/semaineItems'
+import { construireRessourcePrincipaleParUnite, construireRessourcesParUnite, detailsItem, formatHeure } from '../lib/semaineItems'
 import type { ItemJour } from '../lib/semaineItems'
 import { signOut } from '../lib/auth'
 import type { SeanceAvecPlanning } from '../types/seance'
@@ -36,6 +37,7 @@ function Jour() {
   const { chapitres } = useChapitres()
   const { ressources } = useRessourcesToutes()
   const { etats: etatsImpressions, getEtat, setEtat } = useImpressions()
+  const { parametres } = useParametres()
 
   const [jour, setJour] = useState(() => toISODate(new Date()))
   const aujourdhui = toISODate(new Date())
@@ -49,19 +51,45 @@ function Jour() {
   const unitesParId = useMemo(() => new Map(unites.map((u) => [u.id, u])), [unites])
   const chapitresParId = useMemo(() => new Map(chapitres.map((c) => [c.id, c])), [chapitres])
   const ressourcePrincipaleParUnite = useMemo(() => construireRessourcePrincipaleParUnite(ressources), [ressources])
+  const ressourcesParUnite = useMemo(() => construireRessourcesParUnite(ressources), [ressources])
   const ressourcesImprimablesParUnite = useMemo(() => construireRessourcesImprimablesParUnite(ressources), [ressources])
 
   const ctxItems = useMemo(
-    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite }),
-    [classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite],
+    () => ({
+      classesParId,
+      progressionsParId,
+      matieresParId,
+      unitesParId,
+      chapitresParId,
+      ressourcePrincipaleParUnite,
+      ressourcesParUnite,
+    }),
+    [
+      classesParId,
+      progressionsParId,
+      matieresParId,
+      unitesParId,
+      chapitresParId,
+      ressourcePrincipaleParUnite,
+      ressourcesParUnite,
+    ],
   )
 
   // Bornes = le jour affiché des deux côtés : les fonctions d'alerte
   // filtrent par échéance dans [lundi, vendredi], donc passer le même jour
   // deux fois les restreint naturellement à aujourd'hui.
   const alertesImpression = useMemo(
-    () => calculerAlertesImpression(seancesFenetreAlertes, unitesParId, jour, jour, ressourcesImprimablesParUnite, etatsImpressions),
-    [seancesFenetreAlertes, unitesParId, jour, ressourcesImprimablesParUnite, etatsImpressions],
+    () =>
+      calculerAlertesImpression(
+        seancesFenetreAlertes,
+        unitesParId,
+        jour,
+        jour,
+        ressourcesImprimablesParUnite,
+        etatsImpressions,
+        parametres?.delai_impression_defaut_jours ?? null,
+      ),
+    [seancesFenetreAlertes, unitesParId, jour, ressourcesImprimablesParUnite, etatsImpressions, parametres],
   )
   const alertesDistribution = useMemo(
     () => calculerAlertesDistribution(seances, unitesParId, ressourcesImprimablesParUnite, etatsImpressions, jour, jour),
@@ -198,13 +226,13 @@ function Jour() {
 
       <div className="jour-nav">
         <button type="button" className="btn-sm" onClick={() => setJour(toISODate(ajouterJours(parseISODate(jour), -1)))}>
-          ◂ Hier
+          ◂ Précédent
         </button>
         <button type="button" className="btn-sm" onClick={() => setJour(aujourdhui)}>
           Aujourd'hui
         </button>
         <button type="button" className="btn-sm" onClick={() => setJour(toISODate(ajouterJours(parseISODate(jour), 1)))}>
-          Demain ▸
+          Suivant ▸
         </button>
       </div>
     </div>

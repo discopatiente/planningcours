@@ -35,9 +35,9 @@ export function useRessources(uniteId: string | null) {
   }, [reload])
 
   const add = useCallback(
-    async (type: TypeRessource, url: string, libelle: string | null) => {
+    async (type: TypeRessource, url: string, libelle: string | null, necessiteImpression?: boolean) => {
       if (!uniteId) return
-      const created = await createRessource(uniteId, type, url, libelle)
+      const created = await createRessource(uniteId, type, url, libelle, necessiteImpression)
       setRessources((prev) => [...prev, created])
       return created
     },

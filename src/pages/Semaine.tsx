@@ -27,12 +27,19 @@ import { reporterEvaluation } from '../lib/evaluationActions'
 import { calculerAlertesDistribution, calculerAlertesImpression, calculerAlertesInstructionsEleves } from '../lib/alertes'
 import { construireRessourcesImprimablesParUnite } from '../lib/impressions'
 import { construirePresences, rattrapagesPourSeance, seancesAvecRattrapage } from '../lib/absences'
-import { construireRessourcePrincipaleParUnite, detailsItem, formatHeure, matiereDeProgression } from '../lib/semaineItems'
+import {
+  construireRessourcePrincipaleParUnite,
+  construireRessourcesParUnite,
+  detailsItem,
+  formatHeure,
+  matiereDeProgression,
+} from '../lib/semaineItems'
 import { trouverSeanceSuivante } from '../lib/titresSeances'
 import type { ItemJour } from '../lib/semaineItems'
 import SeancePanel from '../components/SeancePanel'
 import SeanceExceptionnelleModal from '../components/SeanceExceptionnelleModal'
 import AlertesPreparation from '../components/AlertesPreparation'
+import { Paperclip } from 'lucide-react'
 
 const NOMS_JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
 
@@ -114,10 +121,27 @@ function Semaine() {
   const chapitresParId = useMemo(() => new Map(chapitres.map((c) => [c.id, c])), [chapitres])
 
   const ressourcePrincipaleParUnite = useMemo(() => construireRessourcePrincipaleParUnite(ressources), [ressources])
+  const ressourcesParUnite = useMemo(() => construireRessourcesParUnite(ressources), [ressources])
 
   const ctxItems = useMemo(
-    () => ({ classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite }),
-    [classesParId, progressionsParId, matieresParId, unitesParId, chapitresParId, ressourcePrincipaleParUnite],
+    () => ({
+      classesParId,
+      progressionsParId,
+      matieresParId,
+      unitesParId,
+      chapitresParId,
+      ressourcePrincipaleParUnite,
+      ressourcesParUnite,
+    }),
+    [
+      classesParId,
+      progressionsParId,
+      matieresParId,
+      unitesParId,
+      chapitresParId,
+      ressourcePrincipaleParUnite,
+      ressourcesParUnite,
+    ],
   )
 
   const ressourcesImprimablesParUnite = useMemo(() => construireRessourcesImprimablesParUnite(ressources), [ressources])
@@ -131,6 +155,7 @@ function Semaine() {
         vendredi,
         ressourcesImprimablesParUnite,
         etatsImpressions,
+        parametres?.delai_impression_defaut_jours ?? null,
       ).map((a) => ({
         id: a.seance.id,
         dateSeance: a.seance.date,
@@ -147,6 +172,7 @@ function Semaine() {
       ressourcePrincipaleParUnite,
       ressourcesImprimablesParUnite,
       etatsImpressions,
+      parametres,
     ],
   )
 
@@ -477,7 +503,8 @@ function Semaine() {
                         key={`${jour}-${heure}`}
                       >
                         {items.map((item) => {
-                          const { classe, matiere, estEvaluation, titre, ressource, titreChapitre } = detailsItem(item, ctxItems, seances)
+                          const { classe, matiere, estEvaluation, titre, ressource, ressourcesUnite, titreChapitre } =
+                            detailsItem(item, ctxItems, seances)
                           return (
                             <div
                               key={item.data.id}
@@ -509,6 +536,14 @@ function Semaine() {
                                     ↗
                                   </a>
                                 )}
+                                {ressourcesUnite.length > 1 && (
+                                  <span
+                                    className="cg-evenement-badge-ressources"
+                                    title={`${ressourcesUnite.length} ressources`}
+                                  >
+                                    <Paperclip size={11} />
+                                  </span>
+                                )}
                                 {!estEvaluation && seancesAvecRattrapageSet.has(item.data.id) && (
                                   <span className="badge-rattrapage" title="Rattrapage de devoir prévu pendant ce cours">
                                     ↻
@@ -533,7 +568,7 @@ function Semaine() {
 
       {itemSelectionne &&
         (() => {
-          const { classe, matiere, estEvaluation, titre, ressource } = detailsItem(itemSelectionne, ctxItems, seances)
+          const { classe, matiere, estEvaluation, titre, ressourcesUnite } = detailsItem(itemSelectionne, ctxItems, seances)
           const seance = itemSelectionne.kind === 'seance' ? itemSelectionne.data : null
           const classeId = itemSelectionne.data.planning.classe_id
           const classeEleves = tousEleves.filter((e) => e.classe_id === classeId)
@@ -563,7 +598,7 @@ function Semaine() {
               notesSeance={seance?.notes_seance ?? null}
               nonTerminee={seance?.non_terminee ?? false}
               aSeanceSuivante={aSeanceSuivante}
-              ressourceUrl={ressource?.url}
+              ressources={ressourcesUnite}
               presences={presences}
               rattrapagesDisponibles={rattrapagesDisponibles}
               onToggleFait={(fait) => toggleFait(itemSelectionne, fait)}

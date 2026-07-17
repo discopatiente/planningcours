@@ -19,7 +19,9 @@ export async function updateAcademie(academie: string | null): Promise<Parametre
 }
 
 export async function updateReglesEvaluations(
-  changes: Partial<Pick<Parametres, 'evaluations_par_trimestre' | 'max_evaluations_semaine'>>,
+  changes: Partial<
+    Pick<Parametres, 'evaluations_par_trimestre' | 'max_evaluations_semaine' | 'delai_impression_defaut_jours'>
+  >,
 ): Promise<Parametres> {
   const { data, error } = await supabase
     .from('parametres')

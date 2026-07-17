@@ -7,4 +7,5 @@ export interface Ressource {
   libelle: string | null
   url: string
   ordre: number
+  necessite_impression: boolean
 }

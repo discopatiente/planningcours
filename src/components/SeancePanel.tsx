@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Modal from './Modal'
+import { LIBELLES_TYPE_RESSOURCE } from '../lib/ressources'
 import type { PresenceEleve, RattrapageDisponible } from '../lib/absences'
+import type { Ressource } from '../types/ressource'
 
 interface SeancePanelProps {
   titre: string
@@ -16,7 +18,7 @@ interface SeancePanelProps {
   notesSeance: string | null
   nonTerminee: boolean
   aSeanceSuivante: boolean
-  ressourceUrl?: string
+  ressources?: Ressource[]
   presences?: PresenceEleve[]
   rattrapagesDisponibles?: RattrapageDisponible[]
   onToggleFait: (fait: boolean) => void
@@ -53,7 +55,7 @@ function SeancePanel({
   notesSeance,
   nonTerminee,
   aSeanceSuivante,
-  ressourceUrl,
+  ressources,
   presences,
   rattrapagesDisponibles,
   onToggleFait,
@@ -86,7 +88,7 @@ function SeancePanel({
   const [savingRattrapages, setSavingRattrapages] = useState(false)
 
   return (
-    <Modal title={titre} onClose={onClose}>
+    <Modal title={titre} onClose={onClose} wide>
       <div className="seance-panel-meta">
         <span className="referentiel-group-dot" style={{ background: matiereCouleur }} />
         {classeNom} — {matiereNom} · {formatDateLongue(date)} à {heureDebut.slice(0, 5)}
@@ -114,11 +116,44 @@ function SeancePanel({
             </label>
           )}
 
-          {ressourceUrl && (
-            <a href={ressourceUrl} target="_blank" rel="noreferrer" className="modal-field-hint">
-              ↗ Ouvrir la ressource
-            </a>
-          )}
+          {ressources && ressources.length > 0 && (() => {
+            const aImprimer = ressources.filter((r) => r.necessite_impression)
+            const autreUsage = ressources.filter((r) => !r.necessite_impression)
+            return (
+              <>
+                {aImprimer.length > 0 && (
+                  <div className="modal-field-group">
+                    <span className="modal-field-title">À imprimer et distribuer</span>
+                    <div className="seance-panel-ressources-groupe">
+                      {aImprimer.map((r) => (
+                        <div className="seance-panel-ressource-ligne" key={r.id}>
+                          <span className="seance-panel-ressource-type">{LIBELLES_TYPE_RESSOURCE[r.type]}</span>
+                          <a href={r.url} target="_blank" rel="noreferrer">
+                            {r.libelle || LIBELLES_TYPE_RESSOURCE[r.type]} ↗
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {autreUsage.length > 0 && (
+                  <div className="modal-field-group">
+                    <span className="modal-field-title">Autre usage (projection, consultation en ligne…)</span>
+                    <div className="seance-panel-ressources-groupe">
+                      {autreUsage.map((r) => (
+                        <div className="seance-panel-ressource-ligne" key={r.id}>
+                          <span className="seance-panel-ressource-type">{LIBELLES_TYPE_RESSOURCE[r.type]}</span>
+                          <a href={r.url} target="_blank" rel="noreferrer">
+                            {r.libelle || LIBELLES_TYPE_RESSOURCE[r.type]} ↗
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )
+          })()}
 
           {estEvaluation && presences && presences.length > 0 && onEnregistrerPresences && (
             <div className="modal-field-group">

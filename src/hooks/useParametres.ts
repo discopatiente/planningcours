@@ -19,7 +19,11 @@ export function useParametres() {
   }, [])
 
   const definirReglesEvaluations = useCallback(
-    async (changes: Partial<Pick<Parametres, 'evaluations_par_trimestre' | 'max_evaluations_semaine'>>) => {
+    async (
+      changes: Partial<
+        Pick<Parametres, 'evaluations_par_trimestre' | 'max_evaluations_semaine' | 'delai_impression_defaut_jours'>
+      >,
+    ) => {
       setParametres(await updateReglesEvaluations(changes))
     },
     [],

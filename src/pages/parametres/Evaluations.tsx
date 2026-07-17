@@ -49,7 +49,28 @@ function Evaluations() {
               }}
             />
           </label>
+          <label className="emploi-toolbar-field">
+            Délai d'impression par défaut (jours)
+            <input
+              type="number"
+              min={0}
+              className="input-sm"
+              defaultValue={parametres.delai_impression_defaut_jours}
+              onBlur={(e) => {
+                const valeur = Number(e.target.value)
+                if (Number.isFinite(valeur) && valeur !== parametres.delai_impression_defaut_jours) {
+                  definirReglesEvaluations({ delai_impression_defaut_jours: valeur })
+                }
+              }}
+            />
+          </label>
         </div>
+      )}
+
+      {!loading && parametres && (
+        <p className="section-desc">
+          S'applique uniquement aux unités sans délai d'impression spécifique renseigné (page Unités de cours).
+        </p>
       )}
 
       <h3 className="section-title" style={{ marginTop: '2rem' }}>
